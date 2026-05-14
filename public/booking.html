@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จองรถ — DriveElite</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="logo"><span class="logo-icon">🚘</span>DriveElite</a>
+  <ul class="nav-links">
+    <li><a href="/">หน้าแรก</a></li>
+    <li><a href="/#cars">รถทั้งหมด</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+    <button class="btn btn-primary" onclick="openModal('registerModal')">สมัครสมาชิก</button>
+  </div>
+</nav>
+
+<div class="booking-layout">
+  <!-- MAIN FORM -->
+  <div class="booking-main">
+    <h1 style="font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 0.5rem; margin-top: 1rem">จองรถ</h1>
+    <p style="color: var(--muted); margin-bottom: 2rem;">กรอกข้อมูลเพื่อทำการจองรถ</p>
+
+    <!-- Step 1: Select Car -->
+    <div class="booking-card">
+      <div class="booking-card-title">🚗 เลือกรถ</div>
+      <div class="form-group">
+        <label class="form-label">ประเภทรถ</label>
+        <select class="form-select" id="carTypeFilter" onchange="filterCarsForBooking()">
+          <option value="all">ทั้งหมด</option>
+          <option value="Sedan">🚗 Sedan</option>
+          <option value="SUV">🚙 SUV</option>
+          <option value="PPV">🛻 PPV</option>
+          <option value="Van">🚐 Van</option>
+          <option value="Luxury">💎 Luxury</option>
+          <option value="Pickup">🚚 Pickup</option>
+        </select>
+      </div>
+      <div id="carSelectGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 0.75rem; margin-top: 1rem;">
+        <div class="loading"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Dates & Locations -->
+    <div class="booking-card">
+      <div class="booking-card-title">📅 วันที่และสถานที่</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">วันรับรถ</label>
+          <input class="form-input" type="date" id="startDate" onchange="updateSummary()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันคืนรถ</label>
+          <input class="form-input" type="date" id="endDate" onchange="updateSummary()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">จุดรับรถ</label>
+        <input class="form-input" type="text" id="pickupLocation" placeholder="เช่น สนามบินสุวรรณภูมิ, โรงแรม...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">จุดส่งรถ (ถ้าต่างจากจุดรับ)</label>
+        <input class="form-input" type="text" id="dropoffLocation" placeholder="เว้นว่างถ้าคืนที่เดิม">
+      </div>
+    </div>
+
+    <!-- Step 3: Additional Options -->
+    <div class="booking-card">
+      <div class="booking-card-title">⚙️ ตัวเลือกเพิ่มเติม</div>
+      <label class="checkbox-group">
+        <input type="checkbox" id="driverNeeded" onchange="updateSummary()">
+        <div>
+          <div class="checkbox-label">🧑‍✈️ ต้องการคนขับรถ</div>
+          <div style="font-size: 0.8rem; color: var(--muted);">+฿500 / วัน</div>
+        </div>
+      </label>
+      <div class="form-group" style="margin-top: 1rem">
+        <label class="form-label">หมายเหตุเพิ่มเติม</label>
+        <textarea class="form-textarea" id="notes" rows="3" placeholder="แจ้งข้อมูลเพิ่มเติมหรือความต้องการพิเศษ..."></textarea>
+      </div>
+    </div>
+
+    <div class="alert" id="bookingAlert"></div>
+    <button class="btn btn-primary btn-lg" style="width: 100%" onclick="submitBooking()">
+      ✅ ยืนยันการจอง
+    </button>
+  </div>
+
+  <!-- SIDEBAR SUMMARY -->
+  <div class="booking-sidebar" style="position: sticky; top: 5rem; align-self: start;">
+    <div class="booking-card">
+      <div class="booking-card-title">📋 สรุปการจอง</div>
+      <div id="summaryContent">
+        <div style="text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem;">
+          <div style="font-size: 3rem; margin-bottom: 0.75rem;">🚗</div>
+          กรุณาเลือกรถและระบุวันที่
+        </div>
+      </div>
+    </div>
+
+    <div class="booking-card" style="background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02))">
+      <div style="font-size: 0.85rem; color: var(--muted); line-height: 1.8">
+        <div>✅ ยกเลิกฟรีก่อน 24 ชั่วโมง</div>
+        <div>✅ ไม่มีค่าใช้จ่ายซ่อนเร้น</div>
+        <div>✅ ประกันภัยครอบคลุม</div>
+        <div>✅ บริการ 24 ชั่วโมง</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎉 จองรถสำเร็จ!</div>
+    </div>
+    <div class="modal-body" id="successContent"></div>
+    <div class="modal-footer">
+      <a href="/" class="btn btn-outline" style="flex:1">กลับหน้าแรก</a>
+      <button class="btn btn-primary" style="flex:1" onclick="window.location.reload()">จองคันใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal', event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">เข้าสู่ระบบเพื่อจองรถ</div>
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert" id="loginAlert"></div>
+      <div class="form-group">
+        <label class="form-label">อีเมล</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน</label>
+        <input class="form-input" type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="flex:1" onclick="login()">เข้าสู่ระบบ</button>
+    </div>
+    <div style="text-align:center; padding: 0 1.5rem 1.5rem; font-size: 0.85rem; color: var(--muted);">
+      ยังไม่มีบัญชี? <a href="#" style="color: var(--accent)" onclick="closeModal('loginModal'); openModal('registerModal')">สมัครสมาชิก</a>
+    </div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="registerModal" onclick="closeModal('registerModal', event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">สมัครสมาชิก</div>
+      <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert" id="registerAlert"></div>
+      <div class="form-group">
+        <label class="form-label">ชื่อ-นามสกุล</label>
+        <input class="form-input" type="text" id="regName" placeholder="กรอกชื่อของคุณ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">อีเมล</label>
+        <input class="form-input" type="email" id="regEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เบอร์โทรศัพท์</label>
+        <input class="form-input" type="tel" id="regPhone" placeholder="0XX-XXX-XXXX">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน</label>
+        <input class="form-input" type="password" id="regPassword" placeholder="อย่างน้อย 6 ตัวอักษร">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="flex:1" onclick="register()">สมัครสมาชิก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  const CAR_ICONS = { Sedan: '🚗', SUV: '🚙', PPV: '🛻', Luxury: '🏎️', Van: '🚐', Pickup: '🚚' };
+  let allCars = [], selectedCarId = null, currentUser = null;
+
+  async function init() {
+    // Set min dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').min = today;
+    document.getElementById('endDate').min = today;
+
+    await checkAuth();
+    const cars = await fetch('/api/cars').then(r => r.json());
+    allCars = cars;
+    renderCarSelect(cars);
+
+    // Auto-select from URL param
+    const params = new URLSearchParams(location.search);
+    const carId = params.get('carId');
+    if (carId) selectCar(parseInt(carId));
+  }
+
+  async function checkAuth() {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (data.loggedIn) {
+      currentUser = data.user;
+      const nav = document.getElementById('navActions');
+      nav.innerHTML = `<span style="color: var(--muted); font-size: 0.875rem">👤 ${data.user.name}</span>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">ออกจากระบบ</button>`;
+    }
+  }
+
+  function renderCarSelect(cars) {
+    const grid = document.getElementById('carSelectGrid');
+    grid.innerHTML = cars.map(car => `
+      <div class="car-select-item" id="carOpt${car.id}" onclick="selectCar(${car.id})" style="
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        background: var(--surface2);
+      ">
+        <div style="font-size: 2rem">${CAR_ICONS[car.type] || '🚗'}</div>
+        <div style="font-weight: 600; font-size: 0.85rem; margin: 0.35rem 0">${car.name}</div>
+        <div style="font-size: 0.75rem; color: var(--accent)">฿${car.price.toLocaleString()}/วัน</div>
+        <div style="font-size: 0.75rem; color: var(--muted)">${car.type} · ${car.seats} ที่นั่ง</div>
+      </div>
+    `).join('');
+  }
+
+  function filterCarsForBooking() {
+    const type = document.getElementById('carTypeFilter').value;
+    const filtered = type === 'all' ? allCars : allCars.filter(c => c.type === type);
+    renderCarSelect(filtered);
+    if (selectedCarId && !filtered.find(c => c.id === selectedCarId)) {
+      selectedCarId = null;
+      updateSummary();
+    }
+  }
+
+  function selectCar(id) {
+    document.querySelectorAll('.car-select-item').forEach(el => {
+      el.style.borderColor = 'var(--border)';
+      el.style.background = 'var(--surface2)';
+    });
+    const el = document.getElementById('carOpt' + id);
+    if (el) {
+      el.style.borderColor = 'var(--accent)';
+      el.style.background = 'rgba(201,168,76,0.08)';
+    }
+    selectedCarId = id;
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const car = allCars.find(c => c.id === selectedCarId);
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    const driver = document.getElementById('driverNeeded').checked;
+    const el = document.getElementById('summaryContent');
+
+    if (!car) {
+      el.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem"><div style="font-size: 3rem; margin-bottom: 0.75rem;">🚗</div>กรุณาเลือกรถ</div>';
+      return;
+    }
+
+    let days = 0, driverFee = 0, total = 0;
+    if (start && end && end > start) {
+      days = Math.ceil((new Date(end) - new Date(start)) / 86400000);
+      driverFee = driver ? 500 * days : 0;
+      total = car.price * days + driverFee;
+    }
+
+    el.innerHTML = `
+      <div class="summary-car">
+        <span style="font-size: 2.5rem">${CAR_ICONS[car.type] || '🚗'}</span>
+        <div>
+          <div class="summary-car-name">${car.name}</div>
+          <div class="summary-car-type">${car.type} · ${car.seats} ที่นั่ง</div>
+        </div>
+      </div>
+      ${start ? `<div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem">📅 ${new Date(start).toLocaleDateString('th-TH', {day:'numeric',month:'long',year:'numeric'})} → ${end ? new Date(end).toLocaleDateString('th-TH', {day:'numeric',month:'long',year:'numeric'}) : '?'}</div>` : ''}
+      <div class="price-breakdown">
+        <div class="price-row"><span>ค่าเช่ารถ (฿${car.price.toLocaleString()} × ${days || '-'} วัน)</span><span>฿${(car.price * days || 0).toLocaleString()}</span></div>
+        ${driver ? `<div class="price-row"><span>ค่าคนขับ (฿500 × ${days} วัน)</span><span>฿${driverFee.toLocaleString()}</span></div>` : ''}
+        <div class="price-row total"><span>รวมทั้งหมด</span><span>฿${total.toLocaleString()}</span></div>
+      </div>
+    `;
+  }
+
+  async function submitBooking() {
+    if (!currentUser) {
+      openModal('loginModal');
+      return;
+    }
+    const alertEl = document.getElementById('bookingAlert');
+    const payload = {
+      carId: selectedCarId,
+      startDate: document.getElementById('startDate').value,
+      endDate: document.getElementById('endDate').value,
+      pickupLocation: document.getElementById('pickupLocation').value,
+      dropoffLocation: document.getElementById('dropoffLocation').value,
+      driverNeeded: document.getElementById('driverNeeded').checked,
+      notes: document.getElementById('notes').value
+    };
+    const res = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      const b = data.booking;
+      document.getElementById('successContent').innerHTML = `
+        <div style="text-align: center; padding: 1rem 0">
+          <div style="font-size: 4rem; margin-bottom: 1rem">🎉</div>
+          <div style="font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 0.5rem">การจองสำเร็จแล้ว!</div>
+          <div style="color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem">หมายเลขการจอง: #${String(b.id).padStart(5,'0')}</div>
+        </div>
+        <div style="background: var(--surface2); border-radius: 10px; padding: 1rem; font-size: 0.875rem">
+          <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem"><span style="color:var(--muted)">รถ</span><span>${b.carName}</span></div>
+          <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem"><span style="color:var(--muted)">ระยะเวลา</span><span>${b.days} วัน</span></div>
+          <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem"><span style="color:var(--muted)">รับรถที่</span><span>${b.pickupLocation}</span></div>
+          <div style="display:flex; justify-content:space-between; font-weight:600; color:var(--accent); border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.5rem"><span>ยอดรวม</span><span>฿${b.totalPrice.toLocaleString()}</span></div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 1rem">เราจะติดต่อกลับเพื่อยืนยันการจองเร็วๆ นี้</p>
+      `;
+      document.getElementById('successModal').classList.add('open');
+    } else {
+      alertEl.className = 'alert show alert-error';
+      alertEl.textContent = data.message;
+      alertEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id, event) {
+    if (event && event.target !== document.getElementById(id)) return;
+    document.getElementById(id).classList.remove('open');
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if (data.success) { closeModal('loginModal'); location.reload(); }
+    else { const a = document.getElementById('loginAlert'); a.className = 'alert show alert-error'; a.textContent = data.message; }
+  }
+
+  async function register() {
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const phone = document.getElementById('regPhone').value;
+    const password = document.getElementById('regPassword').value;
+    const res = await fetch('/api/register', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, email, phone, password})
+    });
+    const data = await res.json();
+    if (data.success) { closeModal('registerModal'); location.reload(); }
+    else { const a = document.getElementById('registerAlert'); a.className = 'alert show alert-error'; a.textContent = data.message; }
+  }
+
+  async function logout() {
+    await fetch('/api/logout', { method: 'POST' });
+    location.reload();
+  }
+
+  function showToast(icon, msg, type) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastMsg').textContent = msg;
+    t.className = `toast show toast-${type}`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  init();
+</script>
+</body>
+</html>

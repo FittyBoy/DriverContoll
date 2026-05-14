@@ -1,0 +1,16 @@
+{
+  "name": "driveelite-car-booking",
+  "version": "1.0.0",
+  "description": "ระบบจองรถออนไลน์พรีเมียม DriveElite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "lowdb": "^1.0.0"
+  }
+}

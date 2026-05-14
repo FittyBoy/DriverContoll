@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — DriveElite</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <div class="admin-sidebar">
+    <div class="admin-logo">🚘 DriveElite Admin</div>
+    <ul class="admin-nav">
+      <li><a href="#" class="active" onclick="showTab('dashboard')">📊 Dashboard</a></li>
+      <li><a href="#" onclick="showTab('bookings')">📋 การจองทั้งหมด</a></li>
+      <li><a href="#" onclick="showTab('pending')">⏳ รอดำเนินการ</a></li>
+      <li><a href="#" onclick="showTab('cars')">🚗 รถทั้งหมด</a></li>
+      <li><a href="/" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem; display: block; padding-left: 0.75rem; color: var(--muted); font-size: 0.875rem; text-decoration: none">← กลับหน้าหลัก</a></li>
+    </ul>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="admin-main">
+
+    <!-- Access Check -->
+    <div id="accessDenied" style="display:none; text-align: center; padding: 5rem 2rem">
+      <div style="font-size: 4rem; margin-bottom: 1rem">🔒</div>
+      <div style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem">ไม่มีสิทธิ์เข้าถึง</div>
+      <div style="color: var(--muted); margin-bottom: 1.5rem">กรุณาเข้าสู่ระบบด้วยบัญชี Admin</div>
+      <button class="btn btn-primary" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+    </div>
+
+    <div id="adminContent" style="display:none">
+
+      <!-- DASHBOARD TAB -->
+      <div class="tab-content active" id="tab-dashboard">
+        <div class="admin-header">
+          <div class="admin-title">Dashboard</div>
+          <div class="admin-subtitle">ภาพรวมระบบจองรถ DriveElite</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon">📋</div>
+            <div class="stat-card-value" id="statTotal">-</div>
+            <div class="stat-card-label">การจองทั้งหมด</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">⏳</div>
+            <div class="stat-card-value" id="statPending">-</div>
+            <div class="stat-card-label">รอดำเนินการ</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">✅</div>
+            <div class="stat-card-value" id="statConfirmed">-</div>
+            <div class="stat-card-label">ยืนยันแล้ว</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon">💰</div>
+            <div class="stat-card-value" id="statRevenue">-</div>
+            <div class="stat-card-label">รายได้รวม (บาท)</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">การจองล่าสุด</div>
+          </div>
+          <div style="overflow-x: auto">
+            <table id="recentTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>ชื่อลูกค้า</th>
+                  <th>รถ</th>
+                  <th>วันรับรถ</th>
+                  <th>ยอดรวม</th>
+                  <th>สถานะ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="recentTableBody">
+                <tr><td colspan="7" style="text-align:center; padding: 2rem; color: var(--muted)">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALL BOOKINGS TAB -->
+      <div class="tab-content" id="tab-bookings">
+        <div class="admin-header">
+          <div class="admin-title">การจองทั้งหมด</div>
+          <div class="admin-subtitle">จัดการการจองทุกรายการ</div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">รายการจอง</div>
+            <input class="form-input" style="max-width:250px" type="text" placeholder="🔍 ค้นหาชื่อลูกค้า..." id="searchInput" oninput="filterTable()">
+          </div>
+          <div style="overflow-x: auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>ลูกค้า</th>
+                  <th>รถ</th>
+                  <th>วันรับ</th>
+                  <th>วันคืน</th>
+                  <th>จุดรับรถ</th>
+                  <th>คนขับ</th>
+                  <th>ยอดรวม</th>
+                  <th>สถานะ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="allBookingsBody">
+                <tr><td colspan="10" style="text-align:center; padding: 2rem; color: var(--muted)">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING TAB -->
+      <div class="tab-content" id="tab-pending">
+        <div class="admin-header">
+          <div class="admin-title">รอดำเนินการ</div>
+          <div class="admin-subtitle">การจองที่รอการยืนยัน</div>
+        </div>
+        <div id="pendingList"></div>
+      </div>
+
+      <!-- CARS TAB -->
+      <div class="tab-content" id="tab-cars">
+        <div class="admin-header">
+          <div class="admin-title">รถทั้งหมด</div>
+          <div class="admin-subtitle">รายการยานพาหนะในระบบ</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ไอคอน</th><th>ชื่อรถ</th><th>ประเภท</th><th>ที่นั่ง</th><th>ราคา/วัน</th><th>สถานะ</th></tr>
+            </thead>
+            <tbody id="carsTableBody">
+              <tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--muted)">กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- end adminContent -->
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal', event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">เข้าสู่ระบบ Admin</div>
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert" id="loginAlert"></div>
+      <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem">ใช้บัญชี: admin@carbook.com / admin123</p>
+      <div class="form-group">
+        <label class="form-label">อีเมล</label>
+        <input class="form-input" type="email" id="loginEmail" value="admin@carbook.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน</label>
+        <input class="form-input" type="password" id="loginPassword" value="admin123">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="flex:1" onclick="login()">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  const CAR_ICONS = { Sedan: '🚗', SUV: '🚙', PPV: '🛻', Luxury: '🏎️', Van: '🚐', Pickup: '🚚' };
+  const STATUS_BADGE = { pending: 'badge-pending', confirmed: 'badge-confirmed', cancelled: 'badge-cancelled', completed: 'badge-completed' };
+  const STATUS_TH = { pending: 'รอดำเนินการ', confirmed: 'ยืนยันแล้ว', cancelled: 'ยกเลิก', completed: 'เสร็จสิ้น' };
+  let allBookings = [];
+
+  async function init() {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (!data.loggedIn || data.user.role !== 'admin') {
+      document.getElementById('accessDenied').style.display = 'block';
+      openModal('loginModal');
+      return;
+    }
+    document.getElementById('adminContent').style.display = 'block';
+    await loadAll();
+  }
+
+  async function loadAll() {
+    await Promise.all([loadStats(), loadBookings(), loadCars()]);
+  }
+
+  async function loadStats() {
+    const res = await fetch('/api/admin/stats');
+    const s = await res.json();
+    document.getElementById('statTotal').textContent = s.total;
+    document.getElementById('statPending').textContent = s.pending;
+    document.getElementById('statConfirmed').textContent = s.confirmed;
+    document.getElementById('statRevenue').textContent = '฿' + s.revenue.toLocaleString();
+  }
+
+  async function loadBookings() {
+    const res = await fetch('/api/admin/bookings');
+    allBookings = await res.json();
+    renderAllBookings(allBookings);
+    renderRecentTable(allBookings.slice(-5).reverse());
+    renderPending(allBookings.filter(b => b.status === 'pending'));
+  }
+
+  function renderRecentTable(bookings) {
+    const tbody = document.getElementById('recentTableBody');
+    if (!bookings.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--muted)">ยังไม่มีการจอง</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => `
+      <tr>
+        <td style="color:var(--muted)">#${String(b.id).padStart(4,'0')}</td>
+        <td><div>${b.userName}</div><div style="font-size:0.75rem; color:var(--muted)">${b.userEmail}</div></td>
+        <td>${CAR_ICONS[b.carType] || '🚗'} ${b.carName}</td>
+        <td style="font-size:0.8rem">${new Date(b.startDate).toLocaleDateString('th-TH')}</td>
+        <td style="color:var(--accent); font-weight:600">฿${b.totalPrice.toLocaleString()}</td>
+        <td><span class="badge ${STATUS_BADGE[b.status] || 'badge-pending'}">${STATUS_TH[b.status]}</span></td>
+        <td>${actionButtons(b)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderAllBookings(bookings) {
+    const tbody = document.getElementById('allBookingsBody');
+    if (!bookings.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--muted)">ยังไม่มีการจอง</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => `
+      <tr>
+        <td style="color:var(--muted)">#${String(b.id).padStart(4,'0')}</td>
+        <td><div>${b.userName}</div><div style="font-size:0.75rem; color:var(--muted)">${b.userEmail}</div></td>
+        <td>${CAR_ICONS[b.carType] || '🚗'} ${b.carName}</td>
+        <td style="font-size:0.8rem">${new Date(b.startDate).toLocaleDateString('th-TH')}</td>
+        <td style="font-size:0.8rem">${new Date(b.endDate).toLocaleDateString('th-TH')}</td>
+        <td style="font-size:0.8rem; max-width: 140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${b.pickupLocation}</td>
+        <td>${b.driverNeeded ? '✅' : '—'}</td>
+        <td style="color:var(--accent); font-weight:600">฿${b.totalPrice.toLocaleString()}</td>
+        <td><span class="badge ${STATUS_BADGE[b.status] || 'badge-pending'}">${STATUS_TH[b.status]}</span></td>
+        <td>${actionButtons(b)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function actionButtons(b) {
+    const btns = [];
+    if (b.status === 'pending') {
+      btns.push(`<button class="btn btn-success btn-sm" onclick="updateStatus(${b.id},'confirmed')">✅</button>`);
+      btns.push(`<button class="btn btn-danger btn-sm" onclick="updateStatus(${b.id},'cancelled')">✕</button>`);
+    }
+    if (b.status === 'confirmed') {
+      btns.push(`<button class="btn btn-ghost btn-sm" onclick="updateStatus(${b.id},'completed')">🏁</button>`);
+    }
+    btns.push(`<button class="btn btn-ghost btn-sm" onclick="deleteBooking(${b.id})" style="color: var(--danger)">🗑</button>`);
+    return `<div style="display:flex; gap:0.35rem">${btns.join('')}</div>`;
+  }
+
+  function renderPending(bookings) {
+    const el = document.getElementById('pendingList');
+    if (!bookings.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">ไม่มีรายการรอดำเนินการ</div></div>';
+      return;
+    }
+    el.innerHTML = bookings.map(b => `
+      <div style="background: var(--surface); border: 1px solid rgba(224,154,48,0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; display: flex; gap: 1.5rem; align-items: flex-start">
+        <div style="font-size: 2.5rem">${CAR_ICONS[b.carType] || '🚗'}</div>
+        <div style="flex: 1">
+          <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:0.5rem">
+            <div>
+              <div style="font-family: 'Playfair Display', serif; font-size: 1.05rem">${b.carName}</div>
+              <div style="font-size: 0.8rem; color: var(--muted)">👤 ${b.userName} (${b.userEmail})</div>
+            </div>
+            <span class="badge badge-pending">รอดำเนินการ</span>
+          </div>
+          <div style="display:flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted)">
+            <span>📅 ${new Date(b.startDate).toLocaleDateString('th-TH')} → ${new Date(b.endDate).toLocaleDateString('th-TH')}</span>
+            <span>📍 ${b.pickupLocation}</span>
+            <span>${b.driverNeeded ? '🧑‍✈️ ต้องการคนขับ' : ''}</span>
+            ${b.notes ? `<span>💬 ${b.notes}</span>` : ''}
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem">
+            <div style="font-family: 'Playfair Display', serif; color: var(--accent); font-size: 1.2rem">฿${b.totalPrice.toLocaleString()}</div>
+            <div style="display:flex; gap: 0.5rem">
+              <button class="btn btn-success btn-sm" onclick="updateStatus(${b.id},'confirmed')">✅ ยืนยัน</button>
+              <button class="btn btn-danger btn-sm" onclick="updateStatus(${b.id},'cancelled')">✕ ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadCars() {
+    const cars = await fetch('/api/cars').then(r => r.json());
+    const tbody = document.getElementById('carsTableBody');
+    tbody.innerHTML = cars.map(c => `
+      <tr>
+        <td style="font-size: 1.5rem">${CAR_ICONS[c.type] || '🚗'}</td>
+        <td><strong>${c.name}</strong><div style="font-size:0.8rem; color:var(--muted)">${c.description}</div></td>
+        <td>${c.type}</td>
+        <td>${c.seats} ที่นั่ง</td>
+        <td style="color:var(--accent); font-weight:600">฿${c.price.toLocaleString()}</td>
+        <td><span class="badge badge-confirmed">พร้อมให้บริการ</span></td>
+      </tr>
+    `).join('');
+  }
+
+  async function updateStatus(id, status) {
+    await fetch(`/api/admin/bookings/${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ status })
+    });
+    showToast('✅', `อัปเดตสถานะเป็น "${STATUS_TH[status]}" สำเร็จ`, 'success');
+    await loadAll();
+  }
+
+  async function deleteBooking(id) {
+    if (!confirm('ต้องการลบการจองนี้ใช่หรือไม่?')) return;
+    await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' });
+    showToast('🗑', 'ลบการจองสำเร็จ', 'success');
+    await loadAll();
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allBookings.filter(b =>
+      b.userName.toLowerCase().includes(q) || b.userEmail.toLowerCase().includes(q) || b.carName.toLowerCase().includes(q)
+    );
+    renderAllBookings(filtered);
+  }
+
+  function showTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id, event) {
+    if (event && event.target !== document.getElementById(id)) return;
+    document.getElementById(id).classList.remove('open');
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if (data.success && data.role === 'admin') {
+      closeModal('loginModal');
+      document.getElementById('accessDenied').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      await loadAll();
+    } else {
+      const a = document.getElementById('loginAlert');
+      a.className = 'alert show alert-error';
+      a.textContent = data.success ? 'บัญชีนี้ไม่ใช่ Admin' : data.message;
+    }
+  }
+
+  function showToast(icon, msg, type) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastMsg').textContent = msg;
+    t.className = `toast show toast-${type}`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  init();
+</script>
+</body>
+</html>
