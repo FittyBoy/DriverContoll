@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveElite — จองรถพรีเมียม</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo"><span class="logo-icon">🚘</span>DriveElite</a>
+  <ul class="nav-links">
+    <li><a href="#cars">รถทั้งหมด</a></li>
+    <li><a href="#how">วิธีจอง</a></li>
+    <li><a href="booking.html">จองรถ</a></li>
+    <li><a href="schedule.html">ตารางจอง</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+    <button class="btn btn-primary" onclick="openModal('registerModal')">สมัครสมาชิก</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content animate">
+    <div class="hero-tag">✦ บริการจองรถระดับพรีเมียม</div>
+    <h1 class="hero-title">เดินทางอย่าง<br><span>มีสไตล์</span><br>ทุกจุดหมาย</h1>
+    <p class="hero-desc">บริการจองรถคุณภาพสูง ทั้งรถเก๋ง SUV รถตู้ และรถหรู พร้อมคนขับมืออาชีพ</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary btn-lg" onclick="document.getElementById('cars').scrollIntoView({behavior:'smooth'})">🔍 ดูรถทั้งหมด</button>
+      <a href="booking.html" class="btn btn-ghost btn-lg">จองเลย</a>
+    </div>
+    <div class="hero-stats">
+      <div><div class="stat-num">200+</div><div class="stat-label">รถพร้อมให้บริการ</div></div>
+      <div><div class="stat-num">5,000+</div><div class="stat-label">การจองสำเร็จ</div></div>
+      <div><div class="stat-num">4.9★</div><div class="stat-label">คะแนนความพึงพอใจ</div></div>
+    </div>
+  </div>
+  <div class="hero-car" style="font-size:25rem;line-height:1;user-select:none;">🚗</div>
+</section>
+
+<!-- CARS -->
+<section class="section" id="cars">
+  <div class="section-header">
+    <div class="section-tag">▸ ยานพาหนะของเรา</div>
+    <h2 class="section-title">เลือกรถที่เหมาะกับคุณ</h2>
+    <p class="section-desc">คัดสรรรถคุณภาพหลากหลายประเภท ตอบโจทย์ทุกการเดินทาง</p>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-chip active" onclick="filterCars('',this)">ทั้งหมด</button>
+  </div>
+  <div class="cars-grid" id="carsGrid">
+    <div class="empty-state"><div class="loading"><span></span><span></span><span></span></div></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="section how-bg" id="how">
+  <div class="section-header">
+    <div class="section-tag">▸ ขั้นตอนการจอง</div>
+    <h2 class="section-title">จองง่าย ใน 4 ขั้นตอน</h2>
+  </div>
+  <div class="steps-grid">
+    <div class="step-card"><div class="step-num">1</div><div class="step-icon">🔍</div><div class="step-title">เลือกรถ</div><div class="step-desc">เลือกรถที่ต้องการจากคลังรถคุณภาพ กรองตามประเภท</div></div>
+    <div class="step-card"><div class="step-num">2</div><div class="step-icon">🧑‍✈️</div><div class="step-title">เลือกคนขับ</div><div class="step-desc">เลือกคนขับมืออาชีพ หรือขับเองก็ได้</div></div>
+    <div class="step-card"><div class="step-num">3</div><div class="step-icon">📅</div><div class="step-title">ระบุวันที่</div><div class="step-desc">กำหนดวันรับ-คืนรถ และจุดรับส่ง</div></div>
+    <div class="step-card"><div class="step-num">4</div><div class="step-icon">🚗</div><div class="step-title">รับรถ</div><div class="step-desc">เจ้าหน้าที่พร้อมบริการตลอด 24 ชั่วโมง</div></div>
+  </div>
+</section>
+
+<footer style="background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 3rem;text-align:center;color:var(--muted);font-size:.85rem">
+  <div style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);margin-bottom:.5rem">🚘 DriveElite</div>
+  <p>© 2024 DriveElite Car Booking. All rights reserved.</p>
+</footer>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal',event)">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">เข้าสู่ระบบ</div><button class="modal-close" onclick="closeModal('loginModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="alert" id="loginAlert"></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" id="loginEmail" placeholder="your@email.com"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input class="form-input" type="password" id="loginPassword" placeholder="••••••••"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="doLogin()">เข้าสู่ระบบ</button></div>
+    <div style="text-align:center;padding:0 1.5rem 1.5rem;font-size:.85rem;color:var(--muted)">
+      ยังไม่มีบัญชี? <a href="#" style="color:var(--accent)" onclick="closeModal('loginModal');openModal('registerModal')">สมัครสมาชิก</a>
+    </div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="registerModal" onclick="closeModal('registerModal',event)">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">สมัครสมาชิก</div><button class="modal-close" onclick="closeModal('registerModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="alert" id="registerAlert"></div>
+      <div class="form-group"><label class="form-label">ชื่อ-นามสกุล</label><input class="form-input" type="text" id="regName"></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" id="regEmail"></div>
+      <div class="form-group"><label class="form-label">เบอร์โทร</label><input class="form-input" type="tel" id="regPhone"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input class="form-input" type="password" id="regPassword"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="doRegister()">สมัครสมาชิก</button></div>
+  </div>
+</div>
+
+<!-- My Bookings Modal -->
+<div class="modal-overlay" id="myBookModal" onclick="closeModal('myBookModal',event)">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header"><div class="modal-title">การจองของฉัน</div><button class="modal-close" onclick="closeModal('myBookModal')">✕</button></div>
+    <div class="modal-body" id="myBookList"><div class="loading"><span></span><span></span><span></span></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastIcon"></span>&nbsp;<span id="toastMsg"></span></div>
+
+<script src="js/api.js"></script>
+<script>
+let allCars = [];
+
+async function init() {
+  await checkAuth();
+  await Promise.all([loadFilters(), loadCars()]);
+}
+
+async function checkAuth() {
+  const d = await api.me();
+  if (d.loggedIn) renderNavUser(d.user);
+}
+
+function renderNavUser(u) {
+  document.getElementById('navActions').innerHTML = `
+    <div class="user-menu-wrap">
+      <button class="btn btn-ghost" onclick="toggleMenu()">👤 ${u.name} ▾</button>
+      <div class="user-menu" id="userMenu">
+        <div class="user-menu-item" onclick="showMyBookings()">📋 การจองของฉัน</div>
+        ${u.role==='admin'?'<a href="admin.html" class="user-menu-item">⚙️ Admin Panel</a>':''}
+        <div class="user-menu-divider"></div>
+        <div class="user-menu-item danger" onclick="doLogout()">🚪 ออกจากระบบ</div>
+      </div>
+    </div>`;
+}
+
+function toggleMenu(){ document.getElementById('userMenu')?.classList.toggle('open'); }
+document.addEventListener('click', e=>{ if(!e.target.closest('.user-menu-wrap')) document.getElementById('userMenu')?.classList.remove('open'); });
+
+async function loadFilters() {
+  const types = await api.carTypes();
+  const bar = document.getElementById('filterBar');
+  types.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-chip';
+    btn.textContent = `${t.icon} ${t.name}`;
+    btn.onclick = () => filterCars(t.id, btn);
+    bar.appendChild(btn);
+  });
+}
+
+async function loadCars(typeId = '') {
+  allCars = await api.cars(typeId || '');
+  renderCars(allCars);
+}
+
+function filterCars(typeId, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  loadCars(typeId);
+}
+
+function renderCars(cars) {
+  const g = document.getElementById('carsGrid');
+  if (!cars.length) { g.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-text">ไม่พบรถที่ต้องการ</div></div>'; return; }
+  g.innerHTML = cars.map(c => `
+    <div class="car-card animate" onclick="location.href='booking.html?carId=${c.id}'">
+      <div class="car-img"><span class="car-img-icon">${c.typeIcon}</span></div>
+      <div class="car-body">
+        <div class="car-type">${c.typeName}</div>
+        <div class="car-name">${c.name}</div>
+        <div class="car-desc">${c.description}</div>
+        <div class="car-meta">
+          <span class="meta-item"><span class="meta-icon">💺</span>${c.seats} ที่นั่ง</span>
+          <span class="meta-item"><span class="meta-icon">✅</span>พร้อมให้บริการ</span>
+        </div>
+        <div class="car-footer">
+          <div></div>
+          <button class="btn btn-primary btn-sm">จองเลย →</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function showMyBookings() {
+  document.getElementById('userMenu')?.classList.remove('open');
+  openModal('myBookModal');
+  const bk = await api.myBookings();
+  const el = document.getElementById('myBookList');
+  const ST = {pending:'รอดำเนินการ',confirmed:'ยืนยันแล้ว',cancelled:'ยกเลิก',completed:'เสร็จสิ้น'};
+  const SB = {pending:'badge-pending',confirmed:'badge-confirmed',cancelled:'badge-cancelled',completed:'badge-completed'};
+  el.innerHTML = bk.length ? bk.map(b=>`
+    <div class="booking-item">
+      <div class="booking-item-icon">${b.carTypeIcon||'🚗'}</div>
+      <div class="booking-item-info">
+        <div class="booking-item-name">${b.carName}</div>
+        <div class="booking-item-dates">${fmtDate(b.startDate)} → ${fmtDate(b.endDate)} (${b.days} วัน)</div>
+        <div class="booking-item-dates">📍 ${b.pickupLocation}${b.driverName?' · 🧑‍✈️ '+b.driverName:''}</div>
+      </div>
+      <span class="badge ${SB[b.status]||'badge-pending'}">${ST[b.status]||b.status}</span>
+    </div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">ยังไม่มีการจอง</div></div>';
+}
+
+function fmtDate(d){ return new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}); }
+
+async function doLogin() {
+  const d = await api.login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+  if (d.success) { closeModal('loginModal'); toast('✅','เข้าสู่ระบบสำเร็จ','success'); if(d.role==='admin') setTimeout(()=>location.href='admin.html',700); else location.reload(); }
+  else { const a=document.getElementById('loginAlert'); a.className='alert show alert-error'; a.textContent=d.message; }
+}
+
+async function doRegister() {
+  const d = await api.register({ name:document.getElementById('regName').value, email:document.getElementById('regEmail').value, phone:document.getElementById('regPhone').value, password:document.getElementById('regPassword').value });
+  if (d.success) { closeModal('registerModal'); toast('🎉','สมัครสมาชิกสำเร็จ!','success'); setTimeout(()=>location.reload(),700); }
+  else { const a=document.getElementById('registerAlert'); a.className='alert show alert-error'; a.textContent=d.message; }
+}
+
+async function doLogout() { await api.logout(); location.reload(); }
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id,e){ if(e&&e.target!==document.getElementById(id))return; document.getElementById(id).classList.remove('open'); }
+function toast(icon,msg,type){ const t=document.getElementById('toast'); document.getElementById('toastIcon').textContent=icon; document.getElementById('toastMsg').textContent=msg; t.className=`toast show toast-${type}`; setTimeout(()=>t.classList.remove('show'),3000); }
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "driveelite-backend",
+  "version": "1.0.0",
+  "description": "DriveElite Car Booking — REST API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs":        "^3.0.3",
+    "cors":            "^2.8.5",
+    "express":         "^5.2.1",
+    "express-session": "^1.19.0",
+    "lowdb":           "^1.0.0"
+  }
+}

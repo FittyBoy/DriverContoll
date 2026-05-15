@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตารางจอง — DriveElite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .sch-wrap { padding: 6rem 2rem 3rem; max-width: 1100px; margin: 0 auto; }
+    .sch-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: .25rem; }
+    .sch-sub   { color: var(--muted); font-size: .9rem; margin-bottom: 1.75rem; }
+
+    /* toolbar */
+    .toolbar { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .toolbar select { font-size: .875rem; padding: .55rem .9rem; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; min-width: 220px; }
+    .toolbar select:focus { outline: none; border-color: var(--accent); }
+    .toolbar select option, .toolbar select optgroup { background: var(--surface2); }
+    .nav-row { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+    .nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: .45rem .9rem; cursor: pointer; font-size: .85rem; color: var(--text); transition: all .2s; }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .week-label { font-size: .85rem; color: var(--muted); min-width: 200px; text-align: center; }
+
+    /* grid wrapper */
+    .grid-outer { border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; background: var(--surface); }
+
+    /* header row */
+    .day-header { display: grid; grid-template-columns: 56px repeat(7, 1fr);
+      border-bottom: 1px solid var(--border); background: var(--surface2); position: sticky; top: 0; z-index: 2; }
+    .dh-blank { border-right: 1px solid var(--border); }
+    .dh-cell  { padding: .6rem .25rem; text-align: center; border-right: 1px solid var(--border); font-size: .75rem; color: var(--muted); }
+    .dh-cell:last-child { border-right: none; }
+    .dh-date  { font-size: 1.3rem; font-weight: 600; color: var(--text); line-height: 1.1; }
+    .dh-cell.today .dh-date,
+    .dh-cell.today .dh-dow { color: var(--accent); }
+
+    /* body */
+    .body-grid { display: grid; grid-template-columns: 56px repeat(7, 1fr); min-width: 640px; }
+
+    .time-col { border-right: 1px solid var(--border); }
+    .time-slot { height: 52px; display: flex; align-items: flex-start; justify-content: flex-end;
+      padding: 3px 6px 0 0; font-size: .7rem; color: var(--muted); border-bottom: 1px solid rgba(42,42,58,.5); }
+    .time-slot:last-child { border-bottom: none; }
+
+    .day-col { border-right: 1px solid var(--border); position: relative; }
+    .day-col:last-child { border-right: none; }
+    .day-col-inner { position: relative; }
+    .hour-row { height: 52px; border-bottom: 1px solid rgba(42,42,58,.35); }
+    .hour-row:last-child { border-bottom: none; }
+    .hour-row.half { border-bottom-style: dashed; opacity: .5; }
+
+    /* booking block */
+    .bk { position: absolute; left: 2px; right: 2px; border-radius: 6px;
+      padding: 3px 6px; font-size: .7rem; overflow: hidden; cursor: pointer; z-index: 1; line-height: 1.35; }
+    .bk-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bk-sub   { opacity: .8;   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* status colors */
+    .bk-confirmed { background: rgba(56,138,221,.18); border: 1px solid #378ADD; color: #85b7eb; }
+    .bk-pending   { background: rgba(186,117,23,.2);  border: 1px solid #BA7517; color: #FAC775; }
+    .bk-completed { background: rgba(76,175,138,.18); border: 1px solid #4caf8a; color: #9FE1CB; }
+    .bk-cancelled { background: rgba(224,85,85,.15);  border: 1px solid #e05555; color: #F09595; }
+
+    /* legend */
+    .legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .75rem; font-size: .78rem; color: var(--muted); }
+    .leg { display: flex; align-items: center; gap: .4rem; }
+    .leg-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    /* empty */
+    .empty-msg { padding: 4rem; text-align: center; color: var(--muted); font-size: .9rem; }
+
+    /* tooltip */
+    .tip { position: fixed; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: .75rem 1rem; font-size: .8rem; z-index: 999;
+      pointer-events: none; min-width: 180px; display: none; }
+    .tip-title { font-weight: 600; font-size: .875rem; color: var(--text); margin-bottom: .35rem; }
+    .tip-row   { color: var(--muted); margin: 2px 0; }
+
+    /* loading spinner */
+    .spin { display: flex; justify-content: center; padding: 3rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo"><span class="logo-icon">🚘</span>DriveElite</a>
+  <ul class="nav-links">
+    <li><a href="index.html">หน้าแรก</a></li>
+    <li><a href="booking.html">จองรถ</a></li>
+    <li><a href="schedule.html" style="color:var(--accent)">ตารางจอง</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+    <button class="btn btn-primary" onclick="openModal('registerModal')">สมัครสมาชิก</button>
+  </div>
+</nav>
+
+<div class="sch-wrap">
+  <h1 class="sch-title">ตารางจองรถ</h1>
+  <p class="sch-sub">ดูการจองรายชั่วโมงแบบ Weekly View เลือกรถแล้วดูตารางได้เลย</p>
+
+  <div class="toolbar">
+    <select id="carSel" onchange="render()">
+      <option value="">— เลือกรถ —</option>
+    </select>
+    <div class="nav-row">
+      <button class="nav-btn" onclick="shiftWeek(-1)">← ก่อนหน้า</button>
+      <span class="week-label" id="weekLabel"></span>
+      <button class="nav-btn" onclick="shiftWeek(1)">ถัดไป →</button>
+      <button class="nav-btn" onclick="goToday()">วันนี้</button>
+    </div>
+  </div>
+
+  <div class="grid-outer" id="gridOuter">
+    <div class="empty-msg">เลือกรถจาก dropdown เพื่อดูตารางจอง</div>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<!-- tooltip -->
+<div class="tip" id="tip"></div>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal',event)">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">เข้าสู่ระบบ</div><button class="modal-close" onclick="closeModal('loginModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="alert" id="loginAlert"></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" id="loginEmail"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input class="form-input" type="password" id="loginPassword"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="doLogin()">เข้าสู่ระบบ</button></div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="registerModal" onclick="closeModal('registerModal',event)">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">สมัครสมาชิก</div><button class="modal-close" onclick="closeModal('registerModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="alert" id="registerAlert"></div>
+      <div class="form-group"><label class="form-label">ชื่อ-นามสกุล</label><input class="form-input" type="text" id="regName"></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" id="regEmail"></div>
+      <div class="form-group"><label class="form-label">เบอร์โทร</label><input class="form-input" type="tel" id="regPhone"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input class="form-input" type="password" id="regPassword"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="doRegister()">สมัครสมาชิก</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastIcon"></span>&nbsp;<span id="toastMsg"></span></div>
+
+<script src="js/api.js"></script>
+<script>
+// ── Constants ────────────────────────────────────────────────────────────────
+const HOURS   = Array.from({length:17},(_,i)=>i+6);  // 06:00 – 22:00
+const DOW_TH  = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const MON_TH  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const SLOT_H  = 52;  // px per hour
+const START_H = HOURS[0];
+const STATUS_TH = { confirmed:'ยืนยันแล้ว', pending:'รอดำเนินการ', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' };
+const LEG_COLORS = { confirmed:'#378ADD', pending:'#BA7517', completed:'#4caf8a', cancelled:'#e05555' };
+const LEG_BG     = { confirmed:'rgba(56,138,221,.18)', pending:'rgba(186,117,23,.2)', completed:'rgba(76,175,138,.18)', cancelled:'rgba(224,85,85,.15)' };
+
+// ── State ────────────────────────────────────────────────────────────────────
+let baseDate = new Date();
+let allCars  = [];
+let carTypes = [];
+let bookings = [];
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  await checkAuth();
+  await loadMasterData();
+  updateWeekLabel();
+}
+
+async function checkAuth() {
+  const d = await api.me();
+  if (d.loggedIn) renderNavUser(d.user);
+}
+
+function renderNavUser(u) {
+  document.getElementById('navActions').innerHTML = `
+    <div class="user-menu-wrap">
+      <button class="btn btn-ghost" onclick="toggleMenu()">👤 ${u.name} ▾</button>
+      <div class="user-menu" id="userMenu">
+        ${u.role==='admin' ? '<a href="admin.html" class="user-menu-item">⚙️ Admin Panel</a>' : ''}
+        <div class="user-menu-divider"></div>
+        <div class="user-menu-item danger" onclick="doLogout()">🚪 ออกจากระบบ</div>
+      </div>
+    </div>`;
+}
+function toggleMenu() { document.getElementById('userMenu')?.classList.toggle('open'); }
+document.addEventListener('click', e => { if(!e.target.closest('.user-menu-wrap')) document.getElementById('userMenu')?.classList.remove('open'); });
+
+async function loadMasterData() {
+  [carTypes, allCars] = await Promise.all([api.carTypes(), api.cars()]);
+  populateDropdown();
+}
+
+function populateDropdown() {
+  const sel = document.getElementById('carSel');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— เลือกรถ —</option>';
+  carTypes.forEach(ct => {
+    const carsInType = allCars.filter(c => c.carTypeId === ct.id);
+    if (!carsInType.length) return;
+    const og = document.createElement('optgroup');
+    og.label = `${ct.icon} ${ct.name}`;
+    carsInType.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.name + (c.description ? ' — ' + c.description.substring(0,20) : '');
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  if (prev) sel.value = prev;
+}
+
+// ── Week helpers ─────────────────────────────────────────────────────────────
+function getWeekStart(d) {
+  const dt = new Date(d); dt.setHours(0,0,0,0);
+  dt.setDate(dt.getDate() - ((dt.getDay()+6)%7));  // Monday = start
+  return dt;
+}
+
+function shiftWeek(n) { baseDate.setDate(baseDate.getDate() + n*7); render(); }
+function goToday()    { baseDate = new Date(); render(); }
+
+function updateWeekLabel() {
+  const mon = getWeekStart(baseDate);
+  const sun = new Date(mon); sun.setDate(sun.getDate()+6);
+  const fmt = d => `${d.getDate()} ${MON_TH[d.getMonth()]} ${d.getFullYear()+543}`;
+  document.getElementById('weekLabel').textContent = `${fmt(mon)} – ${fmt(sun)}`;
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmtTime(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function fmtDate(d) { return `${d.getDate()} ${MON_TH[d.getMonth()]}`; }
+
+// ── Render ───────────────────────────────────────────────────────────────────
+async function render() {
+  updateWeekLabel();
+  const carId = parseInt(document.getElementById('carSel').value) || null;
+  const outer = document.getElementById('gridOuter');
+  if (!carId) { outer.innerHTML = '<div class="empty-msg">เลือกรถจาก dropdown เพื่อดูตารางจอง</div>'; document.getElementById('legend').innerHTML=''; return; }
+
+  outer.innerHTML = '<div class="spin"><div class="loading"><span></span><span></span><span></span></div></div>';
+
+  // Fetch bookings for this car + this week
+  const mon = getWeekStart(baseDate);
+  const weekStart = mon.toISOString().split('T')[0];
+  let carBookings = [];
+  try {
+    carBookings = await api.bookingsByCar(carId, weekStart);
+  } catch(e) { carBookings = []; }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days  = Array.from({length:7}, (_,i) => { const d=new Date(mon); d.setDate(d.getDate()+i); return d; });
+  const car   = allCars.find(c=>c.id===carId);
+
+  let html = '<div class="day-header"><div class="dh-blank"></div>';
+  days.forEach(d => {
+    const isT = d.getTime()===today.getTime();
+    html += `<div class="dh-cell${isT?' today':''}">
+      <div class="dh-dow">${DOW_TH[d.getDay()]}</div>
+      <div class="dh-date">${d.getDate()}</div>
+      <div>${MON_TH[d.getMonth()]}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += '<div class="body-grid"><div class="time-col">';
+  HOURS.forEach(h => { html += `<div class="time-slot">${pad(h)}:00</div>`; });
+  html += '</div>';
+
+  days.forEach(day => {
+    const dayBk = carBookings.filter(b => {
+      const s = new Date(b.startDate); s.setHours(0,0,0,0);
+      return s.getTime() === day.getTime();
+    });
+
+    html += '<div class="day-col"><div class="day-col-inner">';
+    HOURS.forEach(() => { html += '<div class="hour-row"></div>'; });
+
+    dayBk.forEach(b => {
+      const s    = new Date(b.startDate);
+      const e    = new Date(b.endDate);
+      // Use startDate/endDate as day-level for now; for time-level use stored hours if available
+      // Since current schema stores only dates, show as full-day block offset by status
+      const sh   = s.getHours() || 8;
+      const eh   = e.getHours() || (sh + b.days * 8) > 22 ? 18 : sh + 2;
+      const top  = (sh - START_H) * SLOT_H;
+      const ht   = Math.max((eh - sh) * SLOT_H - 2, 24);
+      if (top < 0) return;
+      const cls  = `bk bk-${b.status||'pending'}`;
+      const dur  = `${pad(sh)}:00 – ${pad(eh)}:00`;
+      html += `<div class="${cls}" style="top:${top}px;height:${ht}px"
+        data-bid="${b.id}"
+        onmouseenter="showTip(event,'${b.carName||car?.name}','${dur}','${b.pickupLocation||''}','${b.status}','${b.driverName||''}')"
+        onmouseleave="hideTip()">
+        <div class="bk-title">${b.carName||car?.name||''}</div>
+        <div class="bk-sub">${dur}${b.driverName?' · '+b.driverName:''}</div>
+      </div>`;
+    });
+
+    if (!dayBk.length) {
+      // show subtle "click to book" affordance
+      html += `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0" class="add-day-hint">
+        <a href="booking.html?carId=${carId}" style="font-size:.75rem;color:var(--muted);text-decoration:none">+ จอง</a>
+      </div>`;
+    }
+
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  outer.innerHTML = html;
+
+  // Legend
+  const statuses = [...new Set(carBookings.map(b=>b.status))];
+  const leg = document.getElementById('legend');
+  leg.innerHTML = statuses.length
+    ? statuses.map(s=>`<div class="leg">
+        <div class="leg-dot" style="background:${LEG_BG[s]};border:1px solid ${LEG_COLORS[s]}"></div>
+        ${STATUS_TH[s]||s}
+      </div>`).join('')
+    : `<span style="font-size:.8rem;color:var(--muted)">ไม่มีการจองในสัปดาห์นี้ — <a href="booking.html?carId=${carId}" style="color:var(--accent)">จองรถนี้เลย →</a></span>`;
+}
+
+// ── Tooltip ──────────────────────────────────────────────────────────────────
+function showTip(e, carName, dur, loc, status, driver) {
+  const tip = document.getElementById('tip');
+  tip.innerHTML = `
+    <div class="tip-title">${carName}</div>
+    <div class="tip-row">🕐 ${dur}</div>
+    ${loc ? `<div class="tip-row">📍 ${loc}</div>` : ''}
+    ${driver ? `<div class="tip-row">🧑‍✈️ ${driver}</div>` : ''}
+    <div class="tip-row" style="margin-top:.35rem">
+      <span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:.7rem;background:${LEG_BG[status]};border:1px solid ${LEG_COLORS[status]};color:${LEG_COLORS[status]}">${STATUS_TH[status]||status}</span>
+    </div>`;
+  tip.style.display = 'block';
+  moveTip(e);
+}
+function moveTip(e) {
+  const t = document.getElementById('tip');
+  t.style.left = (e.clientX + 14) + 'px';
+  t.style.top  = (e.clientY - 10) + 'px';
+}
+function hideTip() { document.getElementById('tip').style.display = 'none'; }
+document.addEventListener('mousemove', e => { const t=document.getElementById('tip'); if(t.style.display!=='none') moveTip(e); });
+
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+async function doLogin() {
+  const d = await api.login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+  if (d.success) { closeModal('loginModal'); location.reload(); }
+  else { const a=document.getElementById('loginAlert'); a.className='alert show alert-error'; a.textContent=d.message; }
+}
+async function doRegister() {
+  const d = await api.register({ name:document.getElementById('regName').value, email:document.getElementById('regEmail').value, phone:document.getElementById('regPhone').value, password:document.getElementById('regPassword').value });
+  if (d.success) { closeModal('registerModal'); location.reload(); }
+  else { const a=document.getElementById('registerAlert'); a.className='alert show alert-error'; a.textContent=d.message; }
+}
+async function doLogout() { await api.logout(); location.reload(); }
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id,e) { if(e&&e.target!==document.getElementById(id))return; document.getElementById(id).classList.remove('open'); }
+function toast(icon,msg,type) { const t=document.getElementById('toast'); document.getElementById('toastIcon').textContent=icon; document.getElementById('toastMsg').textContent=msg; t.className=`toast show toast-${type}`; setTimeout(()=>t.classList.remove('show'),3000); }
+
+init();
+</script>
+</body>
+</html>

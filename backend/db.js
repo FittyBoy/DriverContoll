@@ -1,9 +1,9 @@
-const low = require('lowdb');
+const low      = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
-const path = require('path');
+const path     = require('path');
 
 const adapter = new FileSync(path.join(__dirname, 'data/db.json'));
-const db = low(adapter);
+const db      = low(adapter);
 
 db.defaults({
   carTypes: [
@@ -30,8 +30,11 @@ db.defaults({
   ],
   bookings: [],
   users: [
-    { id: 1, name: 'Admin', email: 'admin@carbook.com',
-      password: '$2a$10$XQEZpQmRJy3LJ5FXkJFZ.uwx.FHQiYvz5rU7RNiHZXmKPv7VKZiWu', role: 'admin' }
+    {
+      id: 1, name: 'Admin', email: 'admin@carbook.com',
+      password: '$2a$10$XQEZpQmRJy3LJ5FXkJFZ.uwx.FHQiYvz5rU7RNiHZXmKPv7VKZiWu',
+      role: 'admin'
+    }
   ],
   nextCarTypeId: 7,
   nextDriverId:  5,
