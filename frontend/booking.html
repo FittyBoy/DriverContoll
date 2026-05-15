@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>จองรถ — DriveElite</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>จองรถ — AGC Microglass</title>
+  <link rel="stylesheet" href="css/style.css">
   <style>
     .driver-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem;margin-top:.75rem}
     .driver-card{border:2px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer;transition:all .2s;background:var(--surface2)}
@@ -20,17 +20,24 @@
 <body>
 
 <nav class="navbar">
-  <a href="/" class="logo"><span class="logo-icon">🚘</span>DriveElite</a>
+  <a href="index.html" class="logo">
+    <div class="logo-badge">AGC</div>
+    <div>
+      <div class="logo-name">Microglass</div>
+      <div class="logo-sub">ระบบจองรถ</div>
+    </div>
+  </a>
   <ul class="nav-links">
-    <li><a href="/">หน้าแรก</a></li>
-    <li><a href="/#cars">รถทั้งหมด</a></li>
+    <li><a href="index.html">หน้าแรก</a></li>
+    <li><a href="booking.html">จองรถ</a></li>
+    <li><a href="schedule.html">ตารางจอง</a></li>
   </ul>
   <div class="nav-actions" id="navActions">
     <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
-    <button class="btn btn-primary" onclick="openModal('registerModal')">สมัครสมาชิก</button>
+    <button class="btn btn-primary" style="background:#fff;color:var(--agc-blue);border-color:#fff" onclick="openModal('registerModal')">สมัครสมาชิก</button>
   </div>
 </nav>
-
+<div class="page-body">
 <div style="max-width:760px;margin:0 auto;padding:6rem 1.5rem 3rem">
   <h1 style="font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:.4rem">จองรถ</h1>
   <p style="color:var(--muted);margin-bottom:2rem">กรอกข้อมูลด้านล่างเพื่อทำการจอง</p>
@@ -283,5 +290,6 @@ async function logout(){await fetch('/api/logout',{method:'POST'});location.relo
 
 init();
 </script>
+</div><!-- /page-body -->
 </body>
 </html>

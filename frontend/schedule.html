@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ตารางจอง — DriveElite</title>
+  <title>ตารางจอง — AGC Microglass</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
     .sch-wrap { padding: 6rem 2rem 3rem; max-width: 1100px; margin: 0 auto; }
@@ -84,18 +84,24 @@
 <body>
 
 <nav class="navbar">
-  <a href="index.html" class="logo"><span class="logo-icon">🚘</span>DriveElite</a>
+  <a href="index.html" class="logo">
+    <div class="logo-badge">AGC</div>
+    <div>
+      <div class="logo-name">Microglass</div>
+      <div class="logo-sub">ระบบจองรถ</div>
+    </div>
+  </a>
   <ul class="nav-links">
     <li><a href="index.html">หน้าแรก</a></li>
     <li><a href="booking.html">จองรถ</a></li>
-    <li><a href="schedule.html" style="color:var(--accent)">ตารางจอง</a></li>
+    <li><a href="schedule.html">ตารางจอง</a></li>
   </ul>
   <div class="nav-actions" id="navActions">
     <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
-    <button class="btn btn-primary" onclick="openModal('registerModal')">สมัครสมาชิก</button>
+    <button class="btn btn-primary" style="background:#fff;color:var(--agc-blue);border-color:#fff" onclick="openModal('registerModal')">สมัครสมาชิก</button>
   </div>
 </nav>
-
+<div class="page-body">
 <div class="sch-wrap">
   <h1 class="sch-title">ตารางจองรถ</h1>
   <p class="sch-sub">ดูการจองรายชั่วโมงแบบ Weekly View เลือกรถแล้วดูตารางได้เลย</p>
@@ -117,6 +123,7 @@
   </div>
   <div class="legend" id="legend"></div>
 </div>
+</div><!-- /page-body -->
 
 <!-- tooltip -->
 <div class="tip" id="tip"></div>

@@ -3,44 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DriveElite — จองรถพรีเมียม</title>
+  <title>AGC Microglass — ระบบจองรถ</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <nav class="navbar">
-  <a href="index.html" class="logo"><span class="logo-icon">🚘</span>DriveElite</a>
+  <a href="index.html" class="logo">
+    <div class="logo-badge">AGC</div>
+    <div>
+      <div class="logo-name">Microglass</div>
+      <div class="logo-sub">ระบบจองรถ</div>
+    </div>
+  </a>
   <ul class="nav-links">
-    <li><a href="#cars">รถทั้งหมด</a></li>
-    <li><a href="#how">วิธีจอง</a></li>
+    <li><a href="index.html">หน้าแรก</a></li>
     <li><a href="booking.html">จองรถ</a></li>
     <li><a href="schedule.html">ตารางจอง</a></li>
   </ul>
   <div class="nav-actions" id="navActions">
     <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
-    <button class="btn btn-primary" onclick="openModal('registerModal')">สมัครสมาชิก</button>
+    <button class="btn btn-primary" style="background:#fff;color:var(--agc-blue);border-color:#fff" onclick="openModal('registerModal')">สมัครสมาชิก</button>
   </div>
 </nav>
+<div class="page-body">
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
-  <div class="hero-content animate">
-    <div class="hero-tag">✦ บริการจองรถระดับพรีเมียม</div>
-    <h1 class="hero-title">เดินทางอย่าง<br><span>มีสไตล์</span><br>ทุกจุดหมาย</h1>
-    <p class="hero-desc">บริการจองรถคุณภาพสูง ทั้งรถเก๋ง SUV รถตู้ และรถหรู พร้อมคนขับมืออาชีพ</p>
+  <div class="hero-inner animate">
+    <div class="hero-tag">🏭 AGC Microglass — ระบบจองรถภายใน</div>
+    <h1 class="hero-title">จองรถสำหรับ<br>พนักงาน AGC<br>Microglass</h1>
+    <p class="hero-desc">ระบบจองรถภายในบริษัท สำหรับการเดินทางธุรกิจ รับ-ส่งพนักงาน และกิจกรรมโรงงาน พร้อมคนขับมืออาชีพ</p>
     <div class="hero-actions">
-      <button class="btn btn-primary btn-lg" onclick="document.getElementById('cars').scrollIntoView({behavior:'smooth'})">🔍 ดูรถทั้งหมด</button>
-      <a href="booking.html" class="btn btn-ghost btn-lg">จองเลย</a>
+      <button class="hero-btn-white btn btn-lg" onclick="document.getElementById('cars').scrollIntoView({behavior:'smooth'})">🔍 ดูรถทั้งหมด</button>
+      <a href="booking.html" class="btn btn-lg" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">จองรถเลย →</a>
     </div>
     <div class="hero-stats">
-      <div><div class="stat-num">200+</div><div class="stat-label">รถพร้อมให้บริการ</div></div>
-      <div><div class="stat-num">5,000+</div><div class="stat-label">การจองสำเร็จ</div></div>
-      <div><div class="stat-num">4.9★</div><div class="stat-label">คะแนนความพึงพอใจ</div></div>
+      <div><div class="stat-num" id="hStatCars">—</div><div class="stat-label">รถพร้อมให้บริการ</div></div>
+      <div><div class="stat-num" id="hStatDrivers">—</div><div class="stat-label">คนขับประจำ</div></div>
+      <div><div class="stat-num" id="hStatTypes">—</div><div class="stat-label">ประเภทรถ</div></div>
     </div>
   </div>
-  <div class="hero-car" style="font-size:25rem;line-height:1;user-select:none;">🚗</div>
 </section>
 
 <!-- CARS -->
@@ -72,10 +75,10 @@
   </div>
 </section>
 
-<footer style="background:var(--surface);border-top:1px solid var(--border);padding:2.5rem 3rem;text-align:center;color:var(--muted);font-size:.85rem">
-  <div style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);margin-bottom:.5rem">🚘 DriveElite</div>
-  <p>© 2024 DriveElite Car Booking. All rights reserved.</p>
+<footer class="footer">
+  <strong>AGC Microglass</strong> — ระบบจองรถภายใน &nbsp;|&nbsp; โทร. 02-XXX-XXXX &nbsp;|&nbsp; IT Support
 </footer>
+</div><!-- /page-body -->
 
 <!-- Login Modal -->
 <div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal',event)">
@@ -124,7 +127,19 @@ let allCars = [];
 
 async function init() {
   await checkAuth();
-  await Promise.all([loadFilters(), loadCars()]);
+  await Promise.all([loadFilters(), loadCars(), loadHeroStats()]);
+}
+
+async function loadHeroStats() {
+  try {
+    const [cars, drivers, types] = await Promise.all([api.cars(), api.drivers(), api.carTypes()]);
+    const c = document.getElementById('hStatCars');
+    const d = document.getElementById('hStatDrivers');
+    const t = document.getElementById('hStatTypes');
+    if(c) c.textContent = cars.filter(x=>x.available).length;
+    if(d) d.textContent = drivers.filter(x=>x.available).length;
+    if(t) t.textContent = types.length;
+  } catch(e) {}
 }
 
 async function checkAuth() {

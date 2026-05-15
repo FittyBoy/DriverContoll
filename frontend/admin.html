@@ -3,45 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — DriveElite</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <style>
-    .master-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
-    @media(max-width:800px){.master-grid{grid-template-columns:1fr}}
-    .master-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-    .master-panel-head{padding:1rem 1.25rem;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-    .master-panel-title{font-family:'Playfair Display',serif;font-size:1rem}
-    .master-list{padding:.5rem}
-    .master-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border-radius:8px;transition:background .15s}
-    .master-item:hover{background:var(--surface2)}
-    .master-item-icon{font-size:1.4rem;flex-shrink:0}
-    .master-item-info{flex:1;min-width:0}
-    .master-item-name{font-weight:600;font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .master-item-sub{font-size:.75rem;color:var(--muted)}
-    .master-item-actions{display:flex;gap:.35rem;flex-shrink:0}
-    .add-form{padding:1rem 1.25rem;border-top:1px solid var(--border);background:rgba(201,168,76,.03)}
-    .add-form-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:.75rem;font-weight:600}
-    .inline-row{display:flex;gap:.5rem;flex-wrap:wrap}
-    .inline-row .form-input,.inline-row .form-select{flex:1;min-width:120px}
-    .avail-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;margin-right:.35rem}
-    .avail-dot.off{background:var(--danger)}
-  </style>
+  <title>Admin — AGC Microglass</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="admin-layout">
+<div class="navbar">
+  <a href="index.html" class="logo">
+    <div class="logo-badge">AGC</div>
+    <div>
+      <div class="logo-name">Microglass</div>
+      <div class="logo-sub">Admin Panel</div>
+    </div>
+  </a>
+  <div class="nav-actions">
+    <span id="adminUserLabel" style="color:rgba(255,255,255,.7);font-size:.8rem"></span>
+    <button class="btn btn-outline btn-sm" onclick="adminLogout()">ออกจากระบบ</button>
+  </div>
+</div>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — AGC Microglass</title>
+  <link rel="stylesheet" href="css/style.css">
+  
+</head>
+<body>
+<div class="admin-layout" style="padding-top:58px">
 
   <!-- SIDEBAR -->
   <div class="admin-sidebar">
-    <div class="admin-logo">🚘 DriveElite</div>
+    <div style="padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:.5rem">
+      <div style="font-size:.65rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em">AGC Microglass</div>
+      <div style="font-size:.85rem;color:#fff;font-weight:500;margin-top:.15rem">ระบบจองรถ Admin</div>
+    </div>
     <ul class="admin-nav">
+      <li class="nav-section">ภาพรวม</li>
       <li><a href="#" id="navDashboard" class="active" onclick="showTab('dashboard',this)">📊 Dashboard</a></li>
+      <li class="nav-section">ข้อมูลหลัก</li>
       <li><a href="#" id="navMaster"    onclick="showTab('master',this)">🗂️ Master Data</a></li>
       <li><a href="#" id="navCars"      onclick="showTab('cars',this)">🚗 จัดการรถ</a></li>
+      <li class="nav-section">การจอง</li>
       <li><a href="#" id="navBookings"  onclick="showTab('bookings',this)">📋 การจองทั้งหมด</a></li>
       <li><a href="#" id="navPending"   onclick="showTab('pending',this)">⏳ รอดำเนินการ</a></li>
     </ul>
-    <div style="position:absolute;bottom:1.5rem;left:1.25rem;right:1.25rem">
-      <a href="/" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">← กลับหน้าหลัก</a>
+    <div class="admin-back">
+      <a href="index.html">← กลับหน้าหลัก</a>
     </div>
   </div>
 
@@ -277,6 +285,8 @@ async function init(){
     openModal('loginModal'); return;
   }
   document.getElementById('adminContent').style.display='block';
+    const lbl = document.getElementById('adminUserLabel');
+    if(lbl) lbl.textContent = '👤 ' + d.user.name;
   await loadAll();
 }
 
@@ -602,6 +612,8 @@ async function login(){
     closeModal('loginModal');
     document.getElementById('accessDenied').style.display='none';
     document.getElementById('adminContent').style.display='block';
+    const lbl = document.getElementById('adminUserLabel');
+    if(lbl) lbl.textContent = '👤 ' + d.user.name;
     await loadAll();
   } else {
     const a=document.getElementById('loginAlert');
