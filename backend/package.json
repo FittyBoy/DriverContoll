@@ -1,7 +1,7 @@
 {
   "name": "driveelite-backend",
   "version": "1.0.0",
-  "description": "DriveElite Car Booking — REST API",
+  "description": "AGC Microglass Car Booking — REST API (PostgreSQL)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,6 +12,6 @@
     "cors":            "^2.8.5",
     "express":         "^5.2.1",
     "express-session": "^1.19.0",
-    "lowdb":           "^1.0.0"
+    "pg":              "^8.13.3"
   }
 }

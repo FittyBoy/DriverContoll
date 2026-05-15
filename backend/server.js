@@ -2,240 +2,326 @@ const express = require('express');
 const session = require('express-session');
 const bcrypt  = require('bcryptjs');
 const cors    = require('cors');
-const db      = require('./db');
+const { query, queryOne } = require('./db');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5500';
 
-// ─── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors({
-  origin: FRONTEND_URL,
-  credentials: true               // รองรับ session cookie ข้าม origin
-}));
+// ── Middleware ─────────────────────────────────────────────────────────────
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'driveelite-secret-2024',
+  secret: process.env.SESSION_SECRET || 'agc-mass-secret-2024',
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 1 วัน
-    sameSite: 'lax'
-  }
+  cookie: { maxAge: 24 * 60 * 60 * 1000, sameSite: 'lax' }
 }));
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const isAdmin = (req, res, next) => {
+// ── Guards ─────────────────────────────────────────────────────────────────
+const requireAuth = (req, res, next) => {
+  if (!req.session.user) return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อน' });
+  next();
+};
+const requireAdmin = (req, res, next) => {
   if (!req.session.user || req.session.user.role !== 'admin')
     return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึง' });
   next();
 };
 
-function enrichCar(car) {
-  const ct = db.get('carTypes').find({ id: car.carTypeId }).value() || {};
-  return { ...car, typeName: ct.name || '', typeIcon: ct.icon || '🚗' };
-}
-
-// ─── Auth ──────────────────────────────────────────────────────────────────────
+// ── AUTH ───────────────────────────────────────────────────────────────────
 app.post('/api/register', async (req, res) => {
-  const { name, email, password, phone } = req.body;
-  if (!name || !email || !password)
-    return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
-  if (db.get('users').find({ email }).value())
-    return res.json({ success: false, message: 'อีเมลนี้ถูกใช้งานแล้ว' });
+  try {
+    const { name, email, password, phone } = req.body;
+    if (!name || !email || !password)
+      return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
 
-  const hashed = await bcrypt.hash(password, 10);
-  const id     = db.get('nextUserId').value();
-  db.get('users').push({ id, name, email, password: hashed, phone: phone || '', role: 'user', createdAt: new Date().toISOString() }).write();
-  db.set('nextUserId', id + 1).write();
-  req.session.user = { id, name, email, role: 'user' };
-  res.json({ success: true });
+    const exist = await queryOne('SELECT id FROM users WHERE email=$1', [email]);
+    if (exist) return res.json({ success: false, message: 'อีเมลนี้ถูกใช้งานแล้ว' });
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await queryOne(
+      `INSERT INTO users (name, email, password, phone, role)
+       VALUES ($1,$2,$3,$4,'user') RETURNING id, name, email, role`,
+      [name, email, hashed, phone || null]
+    );
+    req.session.user = user;
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
 app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = db.get('users').find({ email }).value();
-  if (!user)                                   return res.json({ success: false, message: 'ไม่พบบัญชีผู้ใช้' });
-  if (!await bcrypt.compare(password, user.password)) return res.json({ success: false, message: 'รหัสผ่านไม่ถูกต้อง' });
-
-  req.session.user = { id: user.id, name: user.name, email: user.email, role: user.role };
-  res.json({ success: true, role: user.role });
+  try {
+    const { email, password } = req.body;
+    const user = await queryOne('SELECT * FROM users WHERE email=$1', [email]);
+    if (!user) return res.json({ success: false, message: 'ไม่พบบัญชีผู้ใช้' });
+    if (!await bcrypt.compare(password, user.password))
+      return res.json({ success: false, message: 'รหัสผ่านไม่ถูกต้อง' });
+    req.session.user = { id: user.id, name: user.name, email: user.email, role: user.role };
+    res.json({ success: true, role: user.role });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
-
 app.get('/api/me', (req, res) =>
   res.json(req.session.user ? { loggedIn: true, user: req.session.user } : { loggedIn: false }));
 
-// ─── Car Types ────────────────────────────────────────────────────────────────
-app.get('/api/cartypes', (_req, res) => res.json(db.get('carTypes').value()));
-
-app.post('/api/cartypes', isAdmin, (req, res) => {
-  const { name, icon, description } = req.body;
-  if (!name) return res.json({ success: false, message: 'กรุณาระบุชื่อประเภท' });
-  const id = db.get('nextCarTypeId').value();
-  db.get('carTypes').push({ id, name, icon: icon || '🚗', description: description || '' }).write();
-  db.set('nextCarTypeId', id + 1).write();
-  res.json({ success: true, id });
+// ── CAR TYPES ──────────────────────────────────────────────────────────────
+app.get('/api/cartypes', async (_req, res) => {
+  try {
+    res.json(await query('SELECT * FROM car_types ORDER BY id'));
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.put('/api/cartypes/:id', isAdmin, (req, res) => {
-  db.get('carTypes').find({ id: parseInt(req.params.id) }).assign(req.body).write();
-  res.json({ success: true });
+app.post('/api/cartypes', requireAdmin, async (req, res) => {
+  try {
+    const { name, icon, description } = req.body;
+    if (!name) return res.json({ success: false, message: 'กรุณาระบุชื่อประเภท' });
+    const row = await queryOne(
+      `INSERT INTO car_types (name, icon, description) VALUES ($1,$2,$3) RETURNING id`,
+      [name, icon || '🚗', description || '']
+    );
+    res.json({ success: true, id: row.id });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-app.delete('/api/cartypes/:id', isAdmin, (req, res) => {
-  const id = parseInt(req.params.id);
-  if (db.get('cars').find({ carTypeId: id }).value())
-    return res.json({ success: false, message: 'มีรถที่ใช้ประเภทนี้อยู่ ลบไม่ได้' });
-  db.get('carTypes').remove({ id }).write();
-  res.json({ success: true });
+app.put('/api/cartypes/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, icon, description } = req.body;
+    await query(
+      `UPDATE car_types SET name=$1, icon=$2, description=$3 WHERE id=$4`,
+      [name, icon, description, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-// ─── Drivers ──────────────────────────────────────────────────────────────────
-app.get('/api/drivers', (_req, res) => res.json(db.get('drivers').value()));
-
-app.post('/api/drivers', isAdmin, (req, res) => {
-  const { name, phone, license, note } = req.body;
-  if (!name || !phone) return res.json({ success: false, message: 'กรุณาระบุชื่อและเบอร์โทร' });
-  const id = db.get('nextDriverId').value();
-  db.get('drivers').push({ id, name, phone, license: license || '', available: true, note: note || '' }).write();
-  db.set('nextDriverId', id + 1).write();
-  res.json({ success: true, id });
+app.delete('/api/cartypes/:id', requireAdmin, async (req, res) => {
+  try {
+    const used = await queryOne('SELECT id FROM cars WHERE car_type_id=$1 LIMIT 1', [req.params.id]);
+    if (used) return res.json({ success: false, message: 'มีรถที่ใช้ประเภทนี้อยู่ ลบไม่ได้' });
+    await query('DELETE FROM car_types WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-app.put('/api/drivers/:id', isAdmin, (req, res) => {
-  db.get('drivers').find({ id: parseInt(req.params.id) }).assign(req.body).write();
-  res.json({ success: true });
+// ── DRIVERS ────────────────────────────────────────────────────────────────
+app.get('/api/drivers', async (_req, res) => {
+  try {
+    res.json(await query('SELECT * FROM drivers ORDER BY id'));
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.delete('/api/drivers/:id', isAdmin, (req, res) => {
-  db.get('drivers').remove({ id: parseInt(req.params.id) }).write();
-  res.json({ success: true });
+app.post('/api/drivers', requireAdmin, async (req, res) => {
+  try {
+    const { name, phone, license, note } = req.body;
+    if (!name || !phone) return res.json({ success: false, message: 'กรุณาระบุชื่อและเบอร์โทร' });
+    const row = await queryOne(
+      `INSERT INTO drivers (name, phone, license, note) VALUES ($1,$2,$3,$4) RETURNING id`,
+      [name, phone, license || '', note || '']
+    );
+    res.json({ success: true, id: row.id });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-// ─── Cars ─────────────────────────────────────────────────────────────────────
-app.get('/api/cars', (req, res) => {
-  let cars = db.get('cars').value().map(enrichCar);
-  if (req.query.typeId) cars = cars.filter(c => c.carTypeId === parseInt(req.query.typeId));
-  res.json(cars);
+app.put('/api/drivers/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, phone, license, available, note } = req.body;
+    await query(
+      `UPDATE drivers SET name=$1, phone=$2, license=$3, available=$4, note=$5 WHERE id=$6`,
+      [name, phone, license, available, note, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-app.get('/api/cars/:id', (req, res) => {
-  const car = db.get('cars').find({ id: parseInt(req.params.id) }).value();
-  if (!car) return res.status(404).json({ message: 'ไม่พบรถ' });
-  res.json(enrichCar(car));
+app.delete('/api/drivers/:id', requireAdmin, async (req, res) => {
+  try {
+    await query('DELETE FROM drivers WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-app.post('/api/cars', isAdmin, (req, res) => {
-  const { name, carTypeId, seats, description } = req.body;
-  if (!name || !carTypeId) return res.json({ success: false, message: 'กรุณาระบุข้อมูลให้ครบ' });
-  const id = db.get('nextCarId').value();
-  db.get('cars').push({ id, name, carTypeId: parseInt(carTypeId), seats: parseInt(seats) || 4, available: true, description: description || '' }).write();
-  db.set('nextCarId', id + 1).write();
-  res.json({ success: true, id });
+// ── CARS ───────────────────────────────────────────────────────────────────
+app.get('/api/cars', async (req, res) => {
+  try {
+    const { typeId } = req.query;
+    const sql = `
+      SELECT c.*, ct.name AS "typeName", ct.icon AS "typeIcon"
+      FROM cars c
+      JOIN car_types ct ON ct.id = c.car_type_id
+      ${typeId ? 'WHERE c.car_type_id = $1' : ''}
+      ORDER BY c.id`;
+    res.json(await query(sql, typeId ? [typeId] : []));
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.put('/api/cars/:id', isAdmin, (req, res) => {
-  const { name, carTypeId, seats, available, description } = req.body;
-  db.get('cars').find({ id: parseInt(req.params.id) })
-    .assign({ name, carTypeId: parseInt(carTypeId), seats: parseInt(seats), available, description }).write();
-  res.json({ success: true });
+app.get('/api/cars/:id', async (req, res) => {
+  try {
+    const car = await queryOne(
+      `SELECT c.*, ct.name AS "typeName", ct.icon AS "typeIcon"
+       FROM cars c JOIN car_types ct ON ct.id = c.car_type_id
+       WHERE c.id = $1`,
+      [req.params.id]
+    );
+    if (!car) return res.status(404).json({ message: 'ไม่พบรถ' });
+    res.json(car);
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.delete('/api/cars/:id', isAdmin, (req, res) => {
-  db.get('cars').remove({ id: parseInt(req.params.id) }).write();
-  res.json({ success: true });
+app.post('/api/cars', requireAdmin, async (req, res) => {
+  try {
+    const { name, carTypeId, seats, description } = req.body;
+    if (!name || !carTypeId) return res.json({ success: false, message: 'กรุณาระบุข้อมูลให้ครบ' });
+    const row = await queryOne(
+      `INSERT INTO cars (name, car_type_id, seats, description)
+       VALUES ($1,$2,$3,$4) RETURNING id`,
+      [name, carTypeId, seats || 4, description || '']
+    );
+    res.json({ success: true, id: row.id });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-// ─── Bookings ─────────────────────────────────────────────────────────────────
-app.post('/api/bookings', (req, res) => {
-  if (!req.session.user) return res.json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อน' });
-
-  const { carId, driverId, startDate, endDate, pickupLocation, dropoffLocation, notes } = req.body;
-  if (!carId || !startDate || !endDate || !pickupLocation)
-    return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
-
-  const car = db.get('cars').find({ id: parseInt(carId) }).value();
-  if (!car) return res.json({ success: false, message: 'ไม่พบรถที่เลือก' });
-
-  const start = new Date(startDate), end = new Date(endDate);
-  if (end <= start) return res.json({ success: false, message: 'วันคืนรถต้องมากกว่าวันรับรถ' });
-
-  const ct     = db.get('carTypes').find({ id: car.carTypeId }).value() || {};
-  const driver = driverId ? db.get('drivers').find({ id: parseInt(driverId) }).value() || null : null;
-  const days   = Math.ceil((end - start) / 86400000);
-  const id     = db.get('nextBookingId').value();
-
-  const booking = {
-    id,
-    carId: car.id, carName: car.name, carTypeId: car.carTypeId,
-    carTypeName: ct.name || '', carTypeIcon: ct.icon || '🚗',
-    driverId: driver?.id ?? null, driverName: driver?.name ?? null,
-    userId: req.session.user.id, userName: req.session.user.name, userEmail: req.session.user.email,
-    startDate, endDate, days,
-    pickupLocation, dropoffLocation: dropoffLocation || pickupLocation,
-    notes: notes || '',
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  };
-
-  db.get('bookings').push(booking).write();
-  db.set('nextBookingId', id + 1).write();
-  res.json({ success: true, booking });
+app.put('/api/cars/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, carTypeId, seats, available, description } = req.body;
+    await query(
+      `UPDATE cars SET name=$1, car_type_id=$2, seats=$3, available=$4, description=$5 WHERE id=$6`,
+      [name, carTypeId, seats, available, description, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-app.get('/api/bookings/my', (req, res) => {
-  if (!req.session.user) return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
-  res.json(db.get('bookings').filter({ userId: req.session.user.id }).value());
+app.delete('/api/cars/:id', requireAdmin, async (req, res) => {
+  try {
+    await query('DELETE FROM cars WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
-// ดึงการจองทั้งหมดของรถคันนั้น (public — สำหรับแสดงตาราง)
-app.get('/api/bookings/car/:carId', (req, res) => {
-  const carId = parseInt(req.params.carId);
-  const { weekStart } = req.query;   // optional: filter by week (YYYY-MM-DD of Monday)
-  let bk = db.get('bookings').filter({ carId }).value();
-  if (weekStart) {
-    const mon = new Date(weekStart); mon.setHours(0,0,0,0);
-    const sun = new Date(mon); sun.setDate(sun.getDate() + 6); sun.setHours(23,59,59,999);
-    bk = bk.filter(b => {
-      const s = new Date(b.startDate);
-      return s >= mon && s <= sun;
+// ── BOOKINGS ───────────────────────────────────────────────────────────────
+app.post('/api/bookings', requireAuth, async (req, res) => {
+  try {
+    const { carId, driverId, startDate, endDate, pickupLocation, dropoffLocation, notes } = req.body;
+    if (!carId || !startDate || !endDate || !pickupLocation)
+      return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+
+    const car = await queryOne(
+      `SELECT c.*, ct.name AS type_name, ct.icon AS type_icon
+       FROM cars c JOIN car_types ct ON ct.id=c.car_type_id WHERE c.id=$1`,
+      [carId]
+    );
+    if (!car) return res.json({ success: false, message: 'ไม่พบรถที่เลือก' });
+
+    const s = new Date(startDate), e = new Date(endDate);
+    if (e <= s) return res.json({ success: false, message: 'วันคืนรถต้องมากกว่าวันรับรถ' });
+    const days = Math.ceil((e - s) / 86400000);
+
+    let driver = null;
+    if (driverId) driver = await queryOne('SELECT id, name FROM drivers WHERE id=$1', [driverId]);
+
+    const user = req.session.user;
+    const booking = await queryOne(
+      `INSERT INTO bookings
+         (car_id, car_name, car_type_id, car_type_name, car_type_icon,
+          driver_id, driver_name,
+          user_id, user_name, user_email,
+          start_date, end_date, days,
+          pickup_location, dropoff_location, notes, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'pending')
+       RETURNING *`,
+      [
+        car.id, car.name, car.car_type_id, car.type_name, car.type_icon,
+        driver?.id ?? null, driver?.name ?? null,
+        user.id, user.name, user.email,
+        startDate, endDate, days,
+        pickupLocation, dropoffLocation || pickupLocation, notes || ''
+      ]
+    );
+    res.json({ success: true, booking });
+  } catch (e) { res.json({ success: false, message: e.message }); }
+});
+
+app.get('/api/bookings/my', requireAuth, async (req, res) => {
+  try {
+    res.json(await query(
+      'SELECT * FROM bookings WHERE user_id=$1 ORDER BY created_at DESC',
+      [req.session.user.id]
+    ));
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+app.get('/api/bookings/car/:carId', async (req, res) => {
+  try {
+    const { weekStart } = req.query;
+    let sql = 'SELECT * FROM bookings WHERE car_id=$1';
+    const params = [req.params.carId];
+    if (weekStart) {
+      sql += ` AND start_date >= $2 AND start_date <= ($2::date + INTERVAL '6 days')`;
+      params.push(weekStart);
+    }
+    sql += ' ORDER BY start_date';
+    res.json(await query(sql, params));
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────
+app.get('/api/admin/bookings', requireAdmin, async (_req, res) => {
+  try {
+    res.json(await query('SELECT * FROM bookings ORDER BY created_at DESC'));
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+app.put('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
+  try {
+    const fields = Object.keys(req.body)
+      .map((k, i) => {
+        // camelCase → snake_case
+        const col = k.replace(/([A-Z])/g, '_$1').toLowerCase();
+        return `${col}=$${i + 1}`;
+      }).join(', ');
+    await query(
+      `UPDATE bookings SET ${fields} WHERE id=$${Object.keys(req.body).length + 1}`,
+      [...Object.values(req.body), req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
+});
+
+app.delete('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
+  try {
+    await query('DELETE FROM bookings WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
+});
+
+app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
+  try {
+    const [bk, cars, drivers, types] = await Promise.all([
+      query(`SELECT status, COUNT(*)::int AS cnt FROM bookings GROUP BY status`),
+      queryOne('SELECT COUNT(*)::int AS cnt FROM cars'),
+      queryOne('SELECT COUNT(*)::int AS cnt FROM drivers'),
+      queryOne('SELECT COUNT(*)::int AS cnt FROM car_types'),
+    ]);
+    const byStatus = Object.fromEntries(bk.map(r => [r.status, r.cnt]));
+    res.json({
+      totalBookings: Object.values(byStatus).reduce((a, b) => a + b, 0),
+      pending:    byStatus.pending   || 0,
+      confirmed:  byStatus.confirmed || 0,
+      cancelled:  byStatus.cancelled || 0,
+      completed:  byStatus.completed || 0,
+      totalCars:     cars.cnt,
+      totalDrivers:  drivers.cnt,
+      totalCarTypes: types.cnt,
     });
-  }
-  res.json(bk);
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
-app.get('/api/admin/bookings', isAdmin, (_req, res) =>
-  res.json(db.get('bookings').value()));
-
-app.put('/api/admin/bookings/:id', isAdmin, (req, res) => {
-  db.get('bookings').find({ id: parseInt(req.params.id) }).assign(req.body).write();
-  res.json({ success: true });
-});
-
-app.delete('/api/admin/bookings/:id', isAdmin, (req, res) => {
-  db.get('bookings').remove({ id: parseInt(req.params.id) }).write();
-  res.json({ success: true });
-});
-
-app.get('/api/admin/stats', isAdmin, (_req, res) => {
-  const bk = db.get('bookings').value();
-  res.json({
-    totalBookings: bk.length,
-    pending:       bk.filter(b => b.status === 'pending').length,
-    confirmed:     bk.filter(b => b.status === 'confirmed').length,
-    cancelled:     bk.filter(b => b.status === 'cancelled').length,
-    totalCars:     db.get('cars').value().length,
-    totalDrivers:  db.get('drivers').value().length,
-    totalCarTypes: db.get('carTypes').value().length
-  });
-});
-
-// ─── Start ────────────────────────────────────────────────────────────────────
+// ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚗 DriveElite API  →  http://localhost:${PORT}`);
-  console.log(`   Allowed origin  →  ${FRONTEND_URL}`);
+  console.log(`🚗 AGC Microglass API  →  http://localhost:${PORT}`);
+  console.log(`   Frontend origin     →  ${FRONTEND_URL}`);
+  console.log(`   Database schema     →  mass`);
 });
