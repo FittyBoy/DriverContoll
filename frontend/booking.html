@@ -68,11 +68,17 @@
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">วันรับรถ</label>
-        <input class="form-input" type="date" id="startDate">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+          <input class="form-input" type="date" id="startDate">
+          <input class="form-input" type="time" id="startTime" value="09:00">
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">วันคืนรถ</label>
-        <input class="form-input" type="date" id="endDate">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+          <input class="form-input" type="date" id="endDate">
+          <input class="form-input" type="time" id="endTime" value="17:00">
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -256,7 +262,9 @@ async function submitBooking(){
   const body={
     carId:selectedCarId, driverId:selectedDriverId,
     startDate:document.getElementById('startDate').value,
+    startTime:document.getElementById('startTime').value,
     endDate:document.getElementById('endDate').value,
+    endTime:document.getElementById('endTime').value,
     pickupLocation:document.getElementById('pickupLocation').value,
     dropoffLocation:document.getElementById('dropoffLocation').value,
     notes:document.getElementById('notes').value
@@ -272,8 +280,8 @@ async function submitBooking(){
         <div style="color:var(--muted);font-size:.875rem;margin-bottom:1.5rem">หมายเลขการจอง #${String(b.id).padStart(5,'0')}</div>
       </div>
       <div style="background:var(--surface2);border-radius:10px;padding:1rem;font-size:.875rem;line-height:2">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันรับรถ</span><span>${new Date(b.startDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันคืนรถ</span><span>${new Date(b.endDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันรับรถ</span><span>${new Date(b.startDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} เวลา ${b.startTime}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันคืนรถ</span><span>${new Date(b.endDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} เวลา ${b.endTime}</span></div>
         <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">ระยะเวลา</span><span>${b.days} วัน</span></div>
         <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">จุดรับรถ</span><span>${b.pickupLocation}</span></div>
         ${b.driverName?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">คนขับ</span><span>${b.driverName}</span></div>`:''}

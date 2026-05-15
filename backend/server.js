@@ -208,8 +208,8 @@ app.delete('/api/cars/:id', requireAdmin, async (req, res) => {
 // ── BOOKINGS ───────────────────────────────────────────────────────────────
 app.post('/api/bookings', requireAuth, async (req, res) => {
   try {
-    const { carId, driverId, startDate, endDate, pickupLocation, dropoffLocation, notes } = req.body;
-    if (!carId || !startDate || !endDate || !pickupLocation)
+    const { carId, driverId, startDate, startTime, endDate, endTime, pickupLocation, dropoffLocation, notes } = req.body;
+    if (!carId || !startDate || !startTime || !endDate || !endTime || !pickupLocation)
       return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
     if (!driverId)
       return res.json({ success: false, message: 'กรุณาเลือกคนขับ (รถบริษัทต้องมีคนขับเท่านั้น)' });
@@ -221,9 +221,30 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
     );
     if (!car) return res.json({ success: false, message: 'ไม่พบรถที่เลือก' });
 
-    const s = new Date(startDate), e = new Date(endDate);
-    if (e <= s) return res.json({ success: false, message: 'วันคืนรถต้องมากกว่าวันรับรถ' });
-    const days = Math.ceil((e - s) / 86400000);
+    // ตรวจสอบวันและเวลา
+    const startDT = new Date(`${startDate}T${startTime}`);
+    const endDT = new Date(`${endDate}T${endTime}`);
+    if (endDT <= startDT) 
+      return res.json({ success: false, message: 'วันและเวลาคืนรถต้องมากกว่าวันและเวลารับรถ' });
+    
+    const days = Math.ceil((endDT - startDT) / 86400000);
+
+    // ตรวจสอบการซ้อนทับ (conflict checking)
+    const conflict = await queryOne(
+      `SELECT id FROM bookings 
+       WHERE car_id=$1 
+       AND status IN ('pending', 'confirmed')
+       AND (
+         (start_date < $2 AND end_date > $3)
+         OR (start_date = $3 AND start_time < $4)
+         OR (end_date = $2 AND end_time > $5)
+         OR (start_date > $2 AND start_date < $4)
+       )
+       LIMIT 1`,
+      [carId, endDate, startDate, endTime, startTime]
+    );
+    if (conflict)
+      return res.json({ success: false, message: 'รถมีการจองในช่วงเวลานี้แล้ว กรุณาเลือกวันและเวลาอื่น' });
 
     let driver = null;
     if (driverId) driver = await queryOne('SELECT id, name FROM drivers WHERE id=$1', [driverId]);
@@ -234,15 +255,15 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
          (car_id, car_name, car_type_id, car_type_name, car_type_icon,
           driver_id, driver_name,
           user_id, user_name, user_email,
-          start_date, end_date, days,
+          start_date, start_time, end_date, end_time, days,
           pickup_location, dropoff_location, notes, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'pending')
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending')
        RETURNING *`,
       [
         car.id, car.name, car.car_type_id, car.type_name, car.type_icon,
         driver?.id ?? null, driver?.name ?? null,
         user.id, user.name, user.email,
-        startDate, endDate, days,
+        startDate, startTime, endDate, endTime, days,
         pickupLocation, dropoffLocation || pickupLocation, notes || ''
       ]
     );
