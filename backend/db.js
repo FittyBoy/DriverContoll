@@ -1,3 +1,6 @@
+// ── โหลด .env ก่อนทุกอย่าง ────────────────────────────────────────────────
+require('dotenv').config();
+
 // ── PostgreSQL connection pool ─────────────────────────────────────────────
 const { Pool } = require('pg');
 
@@ -6,8 +9,7 @@ const pool = new Pool({
   port:     parseInt(process.env.PG_PORT || '5432'),
   database: process.env.PG_DATABASE || 'postgres',
   user:     process.env.PG_USER     || 'postgres',
-  password: process.env.PG_PASSWORD || '',
-  // search_path ให้ใช้ schema mass ทุก query
+  password: String(process.env.PG_PASSWORD || ''),   // force string เสมอ
   options:  `-c search_path=mass`,
 });
 
@@ -16,19 +18,11 @@ pool.connect()
   .then(c => { console.log('✅ PostgreSQL connected (schema: mass)'); c.release(); })
   .catch(e => console.error('❌ PostgreSQL connection error:', e.message));
 
-/**
- * helper — query แบบ parameterized
- * @param {string} sql
- * @param {any[]}  params
- */
 async function query(sql, params = []) {
   const { rows } = await pool.query(sql, params);
   return rows;
 }
 
-/**
- * helper — query แล้วคืนแถวแรกแถวเดียว (หรือ null)
- */
 async function queryOne(sql, params = []) {
   const rows = await query(sql, params);
   return rows[0] ?? null;
