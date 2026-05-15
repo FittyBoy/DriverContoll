@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev":      "npm-run-all --parallel dev:backend dev:frontend",
+    "dev":          "npm-run-all --parallel dev:backend dev:frontend",
     "dev:backend":  "cd backend && node server.js",
-    "dev:frontend": "cd frontend && npx serve . --listen 5500 --cors"
+    "dev:frontend": "cd frontend && npx http-server . -p 5500 --cors -o"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "DriveElite — Frontend (Static HTML/CSS/JS)",
   "scripts": {
-    "dev":   "npx serve . --listen 5500 --cors",
-    "start": "npx serve . --listen 5500 --cors"
+    "dev": "npx http-server . -p 5500 --cors -o",
+    "start": "npx http-server . -p 5500 --cors"
   },
   "devDependencies": {
-    "serve": "^14.2.4"
+    "http-server": "^14.1.1"
   }
 }
