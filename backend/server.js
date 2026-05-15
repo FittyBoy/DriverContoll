@@ -10,7 +10,10 @@ const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5500';
 
 // ── Middleware ─────────────────────────────────────────────────────────────
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+app.use(cors({
+  origin: [FRONTEND_URL, 'http://localhost:5500', 'http://127.0.0.1:5500'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
