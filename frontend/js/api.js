@@ -1,4 +1,5 @@
-const API = 'http://localhost:3000';
+// ใช้ hostname เดียวกับ browser แต่ชี้ไป port 3000 (backend)
+const API = `${location.protocol}//${location.hostname}:3000`;
 
 // ── Fetch interceptor ────────────────────────────────────────────────────────
 // Patches window.fetch so that any relative /api/ call in inline scripts
