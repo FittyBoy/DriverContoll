@@ -152,7 +152,8 @@ app.get('/api/cars', async (req, res) => {
   try {
     const { typeId } = req.query;
     const sql = `
-      SELECT c.*, ct.name AS "typeName", ct.icon AS "typeIcon"
+      SELECT c.id, c.name, c.car_type_id AS "carTypeId", c.seats, c.available, c.description,
+             ct.name AS "typeName", ct.icon AS "typeIcon"
       FROM cars c
       JOIN car_types ct ON ct.id = c.car_type_id
       ${typeId ? 'WHERE c.car_type_id = $1' : ''}
@@ -164,7 +165,8 @@ app.get('/api/cars', async (req, res) => {
 app.get('/api/cars/:id', async (req, res) => {
   try {
     const car = await queryOne(
-      `SELECT c.*, ct.name AS "typeName", ct.icon AS "typeIcon"
+      `SELECT c.id, c.name, c.car_type_id AS "carTypeId", c.seats, c.available, c.description,
+              ct.name AS "typeName", ct.icon AS "typeIcon"
        FROM cars c JOIN car_types ct ON ct.id = c.car_type_id
        WHERE c.id = $1`,
       [req.params.id]
@@ -230,15 +232,17 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
     const days = Math.ceil((endDT - startDT) / 86400000);
 
     // ตรวจสอบการซ้อนทับ (conflict checking)
+    // Two intervals overlap if: NOT (existing.end <= new.start OR new.end <= existing.start)
     const conflict = await queryOne(
       `SELECT id FROM bookings 
        WHERE car_id=$1 
        AND status IN ('pending', 'confirmed')
-       AND (
-         (start_date < $2 AND end_date > $3)
-         OR (start_date = $3 AND start_time < $4)
-         OR (end_date = $2 AND end_time > $5)
-         OR (start_date > $2 AND start_date < $4)
+       AND NOT (
+         -- No overlap if existing booking ends before or at new booking start
+         (end_date::timestamp + COALESCE(end_time, '09:00'::time)) <= ($3::date::timestamp + $5::time)
+         OR
+         -- No overlap if new booking ends before or at existing booking start
+         ($2::date::timestamp + $4::time) <= (start_date::timestamp + COALESCE(start_time, '09:00'::time))
        )
        LIMIT 1`,
       [carId, endDate, startDate, endTime, startTime]
