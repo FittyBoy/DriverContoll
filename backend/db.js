@@ -9,7 +9,7 @@ const pool = new Pool({
   port:     parseInt(process.env.PG_PORT || '5432'),
   database: process.env.PG_DATABASE || 'postgres',
   user:     process.env.PG_USER     || 'postgres',
-  password: String(process.env.PG_PASSWORD || ''),   // force string เสมอ
+  password: String(process.env.PG_PASSWORD || '').replace(/^["']|["']$/g, ''),  // strip quotes ถ้า dotenv ใส่มา
   options:  `-c search_path=mass`,
 });
 
