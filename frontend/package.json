@@ -1,0 +1,12 @@
+{
+  "name": "driveelite-frontend",
+  "version": "1.0.0",
+  "description": "DriveElite — Frontend (Static HTML/CSS/JS)",
+  "scripts": {
+    "dev":   "npx serve . --listen 5500 --cors",
+    "start": "npx serve . --listen 5500 --cors"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
