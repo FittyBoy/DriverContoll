@@ -208,6 +208,8 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
     const { carId, driverId, startDate, endDate, pickupLocation, dropoffLocation, notes } = req.body;
     if (!carId || !startDate || !endDate || !pickupLocation)
       return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+    if (!driverId)
+      return res.json({ success: false, message: 'กรุณาเลือกคนขับ (รถบริษัทต้องมีคนขับเท่านั้น)' });
 
     const car = await queryOne(
       `SELECT c.*, ct.name AS type_name, ct.icon AS type_icon

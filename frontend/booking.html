@@ -13,9 +13,7 @@
     .driver-card.unavail{opacity:.4;cursor:not-allowed}
     .driver-name{font-weight:600;font-size:.9rem;margin-bottom:.2rem}
     .driver-meta{font-size:.75rem;color:var(--muted);line-height:1.6}
-    .no-driver-opt{border:2px dashed var(--border);border-radius:10px;padding:1rem;cursor:pointer;transition:all .2s;text-align:center;color:var(--muted);font-size:.875rem}
-    .no-driver-opt:hover,.no-driver-opt.selected{border-color:var(--accent);color:var(--accent)}
-  </style>
+    </style>
 </head>
 <body>
 
@@ -44,7 +42,7 @@
 
   <!-- 1. SELECT CAR -->
   <div class="booking-card">
-    <div class="booking-card-title">🚗 เลือกรถ</div>
+    <div class="booking-card-title">🚗 เลือกรถ <span style="color:var(--danger);font-size:.75rem;font-weight:400">* จำเป็น</span></div>
     <div class="form-group">
       <label class="form-label">ประเภทรถ</label>
       <select class="form-select" id="typeFilter" onchange="filterCars()">
@@ -58,8 +56,7 @@
 
   <!-- 2. DRIVER -->
   <div class="booking-card">
-    <div class="booking-card-title">🧑‍✈️ เลือกคนขับ (ไม่บังคับ)</div>
-    <div class="no-driver-opt selected" id="noDriverOpt" onclick="selectDriver(null)">ไม่ต้องการคนขับ / ขับเอง</div>
+    <div class="booking-card-title">🧑‍✈️ เลือกคนขับ <span style="color:var(--danger);font-size:.75rem;font-weight:400">* จำเป็น</span></div>
     <div class="driver-grid" id="driverGrid">
       <div class="loading"><span></span><span></span><span></span></div>
     </div>
@@ -205,6 +202,9 @@ function selectCar(id){
   document.querySelectorAll('.car-select-item').forEach(el=>{
     el.style.borderColor='var(--border)'; el.style.background='var(--surface2)';});
   highlightCar(id);
+  // ซ่อน error ถ้ามีการเลือกแล้ว
+  const alertEl=document.getElementById('bookingAlert');
+  if(alertEl && alertEl.textContent.includes('รถ')) alertEl.className='alert';
 }
 function highlightCar(id){
   const el=document.getElementById('carOpt'+id);
@@ -227,16 +227,31 @@ async function loadDrivers(){
 function selectDriver(id){
   selectedDriverId=id;
   document.querySelectorAll('.driver-card').forEach(el=>el.classList.remove('selected'));
-  document.getElementById('noDriverOpt').classList.toggle('selected', id===null);
-  if(id!==null){
-    const el=document.getElementById('drvOpt'+id);
-    if(el) el.classList.add('selected');
-  }
+  const el=document.getElementById('drvOpt'+id);
+  if(el) el.classList.add('selected');
+  // ซ่อน error ถ้ามีการเลือกแล้ว
+  const alertEl=document.getElementById('bookingAlert');
+  if(alertEl && alertEl.textContent.includes('คนขับ')) alertEl.className='alert';
 }
 
 async function submitBooking(){
   if(!currentUser){openModal('loginModal');return;}
   const alertEl=document.getElementById('bookingAlert');
+
+  // Validation — บังคับเลือกรถและคนขับ
+  if(!selectedCarId){
+    alertEl.className='alert show alert-error';
+    alertEl.textContent='กรุณาเลือกรถที่ต้องการจอง';
+    document.getElementById('carGrid').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  if(!selectedDriverId){
+    alertEl.className='alert show alert-error';
+    alertEl.textContent='กรุณาเลือกคนขับ (รถบริษัทต้องมีคนขับเท่านั้น)';
+    document.getElementById('driverGrid').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+
   const body={
     carId:selectedCarId, driverId:selectedDriverId,
     startDate:document.getElementById('startDate').value,
