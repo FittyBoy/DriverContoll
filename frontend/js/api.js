@@ -1,5 +1,20 @@
 const API = 'http://localhost:3000';
 
+// ── Fetch interceptor ────────────────────────────────────────────────────────
+// Patches window.fetch so that any relative /api/ call in inline scripts
+// automatically gets the correct base URL and credentials: 'include'.
+(function () {
+  const _fetch = window.fetch.bind(window);
+  window.fetch = function (url, opts = {}) {
+    if (typeof url === 'string' && url.startsWith('/api/')) {
+      url = API + url;
+      opts = { credentials: 'include', ...opts };
+    }
+    return _fetch(url, opts);
+  };
+})();
+
+// ── Typed API client (used by pages that import api.js explicitly) ───────────
 async function apiFetch(path, options = {}) {
   const res = await fetch(API + path, {
     credentials: 'include',
