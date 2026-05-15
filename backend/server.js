@@ -11,7 +11,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5500';
 
 // ── Middleware ─────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:5500', 'http://127.0.0.1:5500'],
+  origin: (origin, cb) => cb(null, true),   // รับทุก origin (local dev)
   credentials: true
 }));
 app.use(express.json());
@@ -20,7 +20,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'agc-mass-secret-2024',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000, sameSite: 'lax' }
+  cookie: { maxAge: 24 * 60 * 60 * 1000, sameSite: 'lax', secure: false }
 }));
 
 // ── Guards ─────────────────────────────────────────────────────────────────
