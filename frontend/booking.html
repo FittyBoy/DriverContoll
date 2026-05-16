@@ -292,18 +292,29 @@ async function submitBooking(){
   const data=await res2.json();
   if(data.success){
     const b=data.booking;
+    // map snake_case → ใช้งานใน template
+    const carName    = b.car_name        || b.carName        || '-';
+    const carIcon    = b.car_type_icon   || b.carTypeIcon    || '🚗';
+    const startDate  = new Date(b.start_date || b.startDate);
+    const endDate    = new Date(b.end_date   || b.endDate);
+    const startTime  = b.start_time      || b.startTime      || '';
+    const endTime    = b.end_time        || b.endTime        || '';
+    const pickup     = b.pickup_location || b.pickupLocation  || '-';
+    const driverName = b.driver_name     || b.driverName     || null;
+    const fmtDate    = d => isNaN(d) ? '-' : d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+
     document.getElementById('successContent').innerHTML=`
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:3.5rem;margin-bottom:.75rem">${b.carTypeIcon}</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">${b.carName}</div>
+        <div style="font-size:3.5rem;margin-bottom:.75rem">${carIcon}</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">${carName}</div>
         <div style="color:var(--muted);font-size:.875rem;margin-bottom:1.5rem">หมายเลขการจอง #${String(b.id).padStart(5,'0')}</div>
       </div>
       <div style="background:var(--surface2);border-radius:10px;padding:1rem;font-size:.875rem;line-height:2">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันรับรถ</span><span>${new Date(b.startDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} เวลา ${b.startTime}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันคืนรถ</span><span>${new Date(b.endDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} เวลา ${b.endTime}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันรับรถ</span><span>${fmtDate(startDate)} เวลา ${startTime}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันคืนรถ</span><span>${fmtDate(endDate)} เวลา ${endTime}</span></div>
         <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">ระยะเวลา</span><span>${b.days} วัน</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">จุดรับรถ</span><span>${b.pickupLocation}</span></div>
-        ${b.driverName?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">คนขับ</span><span>${b.driverName}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">จุดรับรถ</span><span>${pickup}</span></div>
+        ${driverName?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">คนขับ</span><span>${driverName}</span></div>`:''}
       </div>
       <p style="font-size:.8rem;color:var(--muted);text-align:center;margin-top:1rem">ทีมงานจะติดต่อกลับเพื่อยืนยันการจองเร็วๆ นี้</p>`;
     document.getElementById('successModal').classList.add('open');

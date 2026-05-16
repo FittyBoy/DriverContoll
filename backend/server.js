@@ -612,7 +612,31 @@ app.post('/api/bookings'
         pickupLocation, dropoffLocation || pickupLocation, notes || ''
       ]
     );
-    res.json({ success: true, booking });
+    // ส่ง camelCase กลับ เพื่อให้ frontend ใช้งานได้สะดวก
+    const bk = booking;
+    res.json({ success: true, booking: {
+      id:              bk.id,
+      carId:           bk.car_id,
+      carName:         bk.car_name,
+      carTypeId:       bk.car_type_id,
+      carTypeName:     bk.car_type_name,
+      carTypeIcon:     bk.car_type_icon,
+      driverId:        bk.driver_id,
+      driverName:      bk.driver_name,
+      userId:          bk.user_id,
+      userName:        bk.user_name,
+      userEmail:       bk.user_email,
+      startDate:       bk.start_date,
+      startTime:       bk.start_time,
+      endDate:         bk.end_date,
+      endTime:         bk.end_time,
+      days:            bk.days,
+      pickupLocation:  bk.pickup_location,
+      dropoffLocation: bk.dropoff_location,
+      notes:           bk.notes,
+      status:          bk.status,
+      createdAt:       bk.created_at,
+    }});
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
