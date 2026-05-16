@@ -70,14 +70,14 @@
         <label class="form-label">วันรับรถ</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
           <input class="form-input" type="date" id="startDate">
-          <input class="form-input" type="time" id="startTime" value="09:00">
+          <select class="form-select" id="startTime"></select>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">วันคืนรถ</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
           <input class="form-input" type="date" id="endDate">
-          <input class="form-input" type="time" id="endTime" value="17:00">
+          <select class="form-select" id="endTime"></select>
         </div>
       </div>
     </div>
@@ -151,7 +151,26 @@
 <script>
 let allCars=[], selectedCarId=null, selectedDriverId=null, currentUser=null;
 
+function buildTimeOptions(selId, defaultVal) {
+  const sel = document.getElementById(selId);
+  sel.innerHTML = '';
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      const hh = String(h).padStart(2,'0');
+      const mm = String(m).padStart(2,'0');
+      const val = hh + ':' + mm;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      if (val === defaultVal) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+}
+
 async function init(){
+  buildTimeOptions('startTime', '09:00');
+  buildTimeOptions('endTime', '17:00');
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('startDate').min=today;
   document.getElementById('endDate').min=today;
