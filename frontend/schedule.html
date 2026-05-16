@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
   <title>ตารางจัดรถ — AGC Microglass</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Noto+Sans+Thai:wght@300;400;500&display=swap">
@@ -204,21 +205,162 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   .page { padding:calc(var(--nav-h)+1.5rem) 1rem 3rem; }
   .nav-links { display:none; }
 }
+=======
+  <title>ตารางรถ — AGC Microglass</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .sch-page { padding: 5.5rem 0 3rem; min-height: 100vh; }
+
+    /* topbar */
+    .sch-topbar {
+      display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+      padding:.9rem 1.75rem;border-bottom:1px solid var(--border);
+      background:var(--surface);position:sticky;top:56px;z-index:10;
+    }
+    .stat-badge {
+      display:flex;align-items:center;gap:.45rem;padding:.3rem .75rem;
+      border-radius:100px;background:var(--surface2);border:1px solid var(--border);
+      font-size:.78rem;font-weight:600;color:var(--text);white-space:nowrap;
+    }
+    .stat-badge .num{color:var(--accent);font-size:.95rem;}
+    .topbar-sep{flex:1;}
+    .search-wrap{position:relative;}
+    .search-wrap input{
+      background:var(--surface2);border:1px solid var(--border);
+      border-radius:8px;padding:.4rem .75rem .4rem 2.1rem;
+      color:var(--text);font-size:.82rem;width:210px;
+    }
+    .search-wrap input:focus{outline:none;border-color:var(--accent);}
+    .search-icon{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);opacity:.4;font-size:.8rem;}
+
+    /* nav */
+    .sch-nav {
+      display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+      padding:.6rem 1.75rem;border-bottom:1px solid var(--border);
+      background:var(--surface);position:sticky;top:calc(56px + 44px);z-index:10;
+    }
+    .nav-date{font-size:.85rem;font-weight:600;color:var(--text);min-width:220px;text-align:center;}
+    .nbtn{
+      background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+      padding:.35rem .75rem;font-size:.8rem;color:var(--text);cursor:pointer;transition:all .15s;
+    }
+    .nbtn:hover,.nbtn.accent{border-color:var(--accent);color:var(--accent);}
+    .nav-right{margin-left:auto;display:flex;gap:.4rem;}
+    .fbtn{
+      padding:.3rem .65rem;font-size:.73rem;border-radius:6px;
+      border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+      cursor:pointer;transition:all .15s;
+    }
+    .fbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+    /* grid */
+    .grid-wrap{overflow-x:auto;}
+    .rgrid{min-width:800px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+
+    .rg-head{
+      display:grid;grid-template-columns:155px repeat(7,1fr);
+      background:var(--surface2);border-bottom:2px solid var(--border);
+      position:sticky;top:calc(56px+44px+41px);z-index:9;
+    }
+    .rg-h0{padding:.55rem .75rem;font-size:.68rem;color:var(--muted);border-right:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;}
+    .rg-hd{
+      padding:.45rem .3rem;text-align:center;border-right:1px solid var(--border);
+    }
+    .rg-hd:last-child{border-right:none;}
+    .hd-dow{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+    .hd-num{font-size:1.2rem;font-weight:700;color:var(--text);line-height:1.1;}
+    .hd-mon{font-size:.63rem;color:var(--muted);}
+    .rg-hd.today .hd-num,.rg-hd.today .hd-dow{color:var(--accent);}
+
+    .rg-type{
+      display:grid;grid-template-columns:155px 1fr;
+      background:rgba(255,255,255,.022);
+      border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    }
+    .rg-type-lbl{
+      padding:.32rem .75rem;font-size:.7rem;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.07em;border-right:1px solid var(--border);
+      display:flex;align-items:center;gap:.35rem;
+    }
+
+    .rg-row{display:grid;grid-template-columns:155px repeat(7,1fr);border-bottom:1px solid var(--border);}
+    .rg-row:hover{background:rgba(255,255,255,.016);}
+    .rg-row:last-child{border-bottom:none;}
+
+    .rg-car{
+      padding:.5rem .75rem;border-right:1px solid var(--border);
+      display:flex;flex-direction:column;justify-content:center;min-height:52px;
+    }
+    .rg-car-name{font-size:.78rem;font-weight:600;color:var(--text);}
+    .rg-car-meta{font-size:.66rem;color:var(--muted);margin-top:2px;}
+
+    .rg-cell{
+      padding:3px 3px;border-right:1px solid var(--border);
+      min-height:52px;display:flex;flex-direction:column;gap:2px;
+    }
+    .rg-cell:last-child{border-right:none;}
+    .rg-cell.today-col{background:rgba(56,138,221,.04);}
+    .rg-cell.wknd{background:rgba(255,255,255,.01);}
+
+    .bk{
+      border-radius:5px;padding:3px 5px;font-size:.66rem;line-height:1.35;
+      cursor:pointer;transition:filter .1s;border-left:3px solid transparent;overflow:hidden;
+    }
+    .bk:hover{filter:brightness(1.15);}
+    .bk-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bk-sub{opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bk-confirmed{background:rgba(56,138,221,.18);border-color:#378ADD;color:#85b7eb;}
+    .bk-pending  {background:rgba(186,117,23,.22); border-color:#BA7517;color:#FAC775;}
+    .bk-completed{background:rgba(76,175,138,.18); border-color:#4caf8a;color:#9FE1CB;}
+    .bk-cancelled{background:rgba(224,85,85,.13);  border-color:#e05555;color:#F09595;}
+
+    /* legend */
+    .sch-leg{
+      display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;
+      padding:.6rem 1.75rem;border-top:1px solid var(--border);
+      font-size:.75rem;color:var(--muted);
+    }
+    .leg{display:flex;align-items:center;gap:.4rem;}
+    .leg-dot{width:10px;height:10px;border-radius:2px;border:1px solid;}
+
+    /* tooltip */
+    .tip{
+      position:fixed;background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:.7rem .95rem;font-size:.78rem;z-index:999;
+      pointer-events:none;min-width:190px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4);
+    }
+    .tip-car{font-weight:700;font-size:.83rem;color:var(--text);margin-bottom:.3rem;}
+    .tip-row{color:var(--muted);margin:2px 0;}
+    .tip-badge{
+      display:inline-block;padding:2px 8px;border-radius:100px;
+      font-size:.68rem;margin-top:.3rem;
+    }
+
+    .sch-loading{display:flex;justify-content:center;padding:4rem;}
+    .sch-empty{text-align:center;padding:4rem;color:var(--muted);font-size:.9rem;}
+>>>>>>> 0c3f4b1ac3e688679c9208ee51cd8fc43edd9029
   </style>
 </head>
 <body>
 
 <nav class="navbar">
+<<<<<<< HEAD
   <a href="index.html" class="logo-wrap">
     <div class="logo-pill">AGC</div>
     <div>
       <div class="logo-title">Microglass</div>
       <div class="logo-sub">Transportation</div>
     </div>
+=======
+  <a href="index.html" class="logo">
+    <div class="logo-badge">AGC</div>
+    <div><div class="logo-name">Microglass</div><div class="logo-sub">Transportation</div></div>
+>>>>>>> 0c3f4b1ac3e688679c9208ee51cd8fc43edd9029
   </a>
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
     <li><a href="booking.html">Book</a></li>
+<<<<<<< HEAD
     <li><a href="schedule.html" class="active">Schedule</a></li>
   </ul>
   <div class="nav-end" id="navEnd">
@@ -256,6 +398,55 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 <div class="tip" id="tip"></div>
 
 <div class="modal-overlay" id="loginModal" onclick="closeOvl('loginModal',event)">
+=======
+    <li><a href="schedule.html">Schedule</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-outline" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+  </div>
+</nav>
+
+<div class="sch-page">
+  <div class="sch-topbar">
+    <div class="stat-badge"><span class="num" id="stTrips">—</span>&nbsp;TRIPS</div>
+    <div class="stat-badge"><span class="num" id="stVeh">—</span>&nbsp;vehicles</div>
+    <div class="stat-badge"><span class="num" id="stDrv">—</span>&nbsp;drivers</div>
+    <div class="topbar-sep"></div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchBox" placeholder="Search driver / passenger…" oninput="applySearch()">
+    </div>
+  </div>
+
+  <div class="sch-nav">
+    <button class="nbtn" onclick="shiftWeek(-1)">←</button>
+    <div class="nav-date" id="navDate">—</div>
+    <button class="nbtn" onclick="shiftWeek(1)">→</button>
+    <button class="nbtn accent" onclick="goToday()">Today</button>
+    <div class="nav-right">
+      <button class="fbtn active" data-s="all"       onclick="setFilter('all')">All</button>
+      <button class="fbtn"        data-s="confirmed" onclick="setFilter('confirmed')">Confirmed</button>
+      <button class="fbtn"        data-s="pending"   onclick="setFilter('pending')">Pending</button>
+      <button class="fbtn"        data-s="completed" onclick="setFilter('completed')">Completed</button>
+    </div>
+  </div>
+
+  <div class="grid-wrap" id="gridWrap">
+    <div class="sch-loading"><div class="loading"><span></span><span></span><span></span></div></div>
+  </div>
+
+  <div class="sch-leg">
+    <div class="leg"><div class="leg-dot" style="background:rgba(56,138,221,.22);border-color:#378ADD"></div>Confirmed</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(186,117,23,.3);border-color:#BA7517"></div>Pending</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(76,175,138,.22);border-color:#4caf8a"></div>Completed</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(224,85,85,.18);border-color:#e05555"></div>Cancelled</div>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal',event)">
+>>>>>>> 0c3f4b1ac3e688679c9208ee51cd8fc43edd9029
   <div class="modal">
     <div class="modal-hd">
       <div class="modal-title">Sign in</div>
@@ -269,6 +460,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
     <div class="modal-ft"><button class="btn-submit" onclick="doLogin()">Continue &rarr;</button></div>
   </div>
 </div>
+<<<<<<< HEAD
 
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
@@ -512,6 +704,151 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 function closeOvl(id,e){ if(e.target===document.getElementById(id))closeModal(id); }
 function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+=======
+<div class="toast" id="toast"><span id="toastIcon"></span>&nbsp;<span id="toastMsg"></span></div>
+
+<script src="js/api.js"></script>
+<script>
+const DOW   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const S_TH  = {confirmed:'Confirmed',pending:'Pending',completed:'Completed',cancelled:'Cancelled'};
+const S_COL = {confirmed:'#378ADD',pending:'#BA7517',completed:'#4caf8a',cancelled:'#e05555'};
+const S_BG  = {confirmed:'rgba(56,138,221,.18)',pending:'rgba(186,117,23,.22)',completed:'rgba(76,175,138,.18)',cancelled:'rgba(224,85,85,.13)'};
+
+let baseDate=new Date(), allCars=[], allBks=[], filterS='all', searchQ='';
+
+async function init(){
+  try{ const m=await api.me(); if(m.loggedIn) renderNav(m.user); }catch(e){}
+  await load();
+}
+
+function renderNav(u){
+  document.getElementById('navActions').innerHTML=`
+    <div class="user-menu-wrap">
+      <button class="btn btn-ghost" onclick="toggleMenu()">👤 ${u.name} ▾</button>
+      <div class="user-menu" id="userMenu">
+        ${u.role==='admin'?'<a href="admin.html" class="user-menu-item">⚙️ Admin Panel</a>':''}
+        <div class="user-menu-divider"></div>
+        <div class="user-menu-item danger" onclick="doLogout()">🚪 ออกจากระบบ</div>
+      </div>
+    </div>`;
+}
+function toggleMenu(){ document.getElementById('userMenu')?.classList.toggle('open'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('.user-menu-wrap')) document.getElementById('userMenu')?.classList.remove('open'); });
+
+function getMonday(d){ const dt=new Date(d); dt.setHours(0,0,0,0); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
+function shiftWeek(n){ baseDate.setDate(baseDate.getDate()+n*7); load(); }
+function goToday()   { baseDate=new Date(); load(); }
+function getDays()   { const m=getMonday(baseDate); return Array.from({length:7},(_,i)=>{ const d=new Date(m); d.setDate(d.getDate()+i); return d; }); }
+function toYMD(d)    { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+async function load(){
+  document.getElementById('gridWrap').innerHTML='<div class="sch-loading"><div class="loading"><span></span><span></span><span></span></div></div>';
+  const days=getDays();
+  const fmt=d=>`${DOW[d.getDay()]} ${d.getDate()} ${MONS[d.getMonth()]} ${d.getFullYear()}`;
+  document.getElementById('navDate').textContent=`${fmt(days[0])}  —  ${fmt(days[6])}`;
+  try{
+    const data=await fetch(`/api/schedule?weekStart=${toYMD(days[0])}`,{credentials:'include'}).then(r=>r.json());
+    allCars=data.cars||[]; allBks=data.bookings||[];
+  }catch(e){ allCars=[]; allBks=[]; }
+  updateStats(); render(days);
+}
+
+function filtered(){ return allBks.filter(b=>{
+  if(filterS!=='all'&&b.status!==filterS) return false;
+  if(searchQ){ const q=searchQ.toLowerCase(); return (b.user_name||'').toLowerCase().includes(q)||(b.driver_name||'').toLowerCase().includes(q)||(b.car_name||'').toLowerCase().includes(q); }
+  return true;
+}); }
+
+function updateStats(){
+  const v=filtered();
+  document.getElementById('stTrips').textContent=v.length;
+  document.getElementById('stVeh').textContent=new Set(v.map(b=>b.car_id)).size;
+  document.getElementById('stDrv').textContent=new Set(v.filter(b=>b.driver_name).map(b=>b.driver_name)).size;
+}
+
+function setFilter(s){
+  filterS=s;
+  document.querySelectorAll('.fbtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.s===s));
+  updateStats(); render();
+}
+function applySearch(){ searchQ=document.getElementById('searchBox').value; updateStats(); render(); }
+
+function render(days){
+  if(!days) days=getDays();
+  const todayStr=toYMD(new Date());
+  const bks=filtered();
+  if(!allCars.length){ document.getElementById('gridWrap').innerHTML='<div class="sch-empty">ไม่พบข้อมูลรถ</div>'; return; }
+
+  const typeMap=new Map();
+  allCars.forEach(c=>{
+    if(!typeMap.has(c.type_id)) typeMap.set(c.type_id,{id:c.type_id,name:c.type_name,icon:c.type_icon,cars:[]});
+    typeMap.get(c.type_id).cars.push(c);
+  });
+
+  let h='<div class="rgrid">';
+  // header
+  h+='<div class="rg-head"><div class="rg-h0">รถ</div>';
+  days.forEach(d=>{
+    const isT=toYMD(d)===todayStr;
+    h+=`<div class="rg-hd${isT?' today':''}"><div class="hd-dow">${DOW[d.getDay()]}</div><div class="hd-num">${d.getDate()}</div><div class="hd-mon">${MONS[d.getMonth()]}</div></div>`;
+  });
+  h+='</div>';
+
+  typeMap.forEach(type=>{
+    h+=`<div class="rg-type"><div class="rg-type-lbl">${type.icon||''} ${type.name}</div><div></div></div>`;
+    type.cars.forEach(car=>{
+      h+='<div class="rg-row">';
+      h+=`<div class="rg-car"><div class="rg-car-name">${car.name}</div><div class="rg-car-meta">${car.seats?car.seats+' seats':''}</div></div>`;
+      days.forEach(d=>{
+        const ds=toYMD(d);
+        const isT=ds===todayStr, isW=d.getDay()===0||d.getDay()===6;
+        const cb=bks.filter(b=>b.car_id===car.id&&b.start_date<=ds&&b.end_date>=ds);
+        h+=`<div class="rg-cell${isT?' today-col':''}${isW?' wknd':''}">`;
+        cb.forEach(b=>{
+          const time=b.start_time&&b.end_time?`${b.start_time}–${b.end_time}`:'';
+          const su=(b.user_name||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          const sd=(b.driver_name||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          const sl=(b.pickup_location||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          const sc=car.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          h+=`<div class="bk bk-${b.status}" onmouseenter="showTip(event,'${sc}','${time}','${su}','${sd}','${sl}','${b.status}')" onmouseleave="hideTip()">
+            <div class="bk-name">${b.user_name||'—'}</div>
+            <div class="bk-sub">${time}${b.driver_name?' · '+b.driver_name:''}</div>
+          </div>`;
+        });
+        h+='</div>';
+      });
+      h+='</div>';
+    });
+  });
+  h+='</div>';
+  document.getElementById('gridWrap').innerHTML=h;
+}
+
+function showTip(e,car,time,user,driver,loc,status){
+  const t=document.getElementById('tip');
+  t.innerHTML=`<div class="tip-car">${car}</div>
+    ${time?`<div class="tip-row">🕐 ${time}</div>`:''}
+    ${user?`<div class="tip-row">👤 ${user}</div>`:''}
+    ${driver?`<div class="tip-row">🧑‍✈️ ${driver}</div>`:''}
+    ${loc?`<div class="tip-row">📍 ${loc}</div>`:''}
+    <div><span class="tip-badge" style="background:${S_BG[status]};border:1px solid ${S_COL[status]};color:${S_COL[status]}">${S_TH[status]||status}</span></div>`;
+  t.style.display='block'; moveTip(e);
+}
+function moveTip(e){ const t=document.getElementById('tip'); t.style.left=Math.min(e.clientX+14,window.innerWidth-210)+'px'; t.style.top=(e.clientY-10)+'px'; }
+function hideTip(){ document.getElementById('tip').style.display='none'; }
+document.addEventListener('mousemove',e=>{ const t=document.getElementById('tip'); if(t.style.display!=='none') moveTip(e); });
+
+async function doLogin(){
+  const d=await api.login(document.getElementById('loginEmail').value,document.getElementById('loginPassword').value);
+  if(d.success){closeModal('loginModal');location.reload();}
+  else{const a=document.getElementById('loginAlert');a.className='alert show alert-error';a.textContent=d.message;}
+}
+async function doLogout(){ await api.logout(); location.reload(); }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id,e){ if(e&&e.target!==document.getElementById(id))return; document.getElementById(id).classList.remove('open'); }
+function toast(icon,msg,type){ const t=document.getElementById('toast'); document.getElementById('toastIcon').textContent=icon; document.getElementById('toastMsg').textContent=msg; t.className=`toast show toast-${type}`; setTimeout(()=>t.classList.remove('show'),3000); }
+>>>>>>> 0c3f4b1ac3e688679c9208ee51cd8fc43edd9029
 
 init();
 </script>
