@@ -68,11 +68,17 @@
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">วันรับรถ</label>
-        <input class="form-input" type="date" id="startDate">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+          <input class="form-input" type="date" id="startDate">
+          <select class="form-select" id="startTime"></select>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">วันคืนรถ</label>
-        <input class="form-input" type="date" id="endDate">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+          <input class="form-input" type="date" id="endDate">
+          <select class="form-select" id="endTime"></select>
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -145,7 +151,26 @@
 <script>
 let allCars=[], selectedCarId=null, selectedDriverId=null, currentUser=null;
 
+function buildTimeOptions(selId, defaultVal) {
+  const sel = document.getElementById(selId);
+  sel.innerHTML = '';
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      const hh = String(h).padStart(2,'0');
+      const mm = String(m).padStart(2,'0');
+      const val = hh + ':' + mm;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      if (val === defaultVal) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+}
+
 async function init(){
+  buildTimeOptions('startTime', '09:00');
+  buildTimeOptions('endTime', '17:00');
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('startDate').min=today;
   document.getElementById('endDate').min=today;
@@ -156,7 +181,7 @@ async function init(){
 }
 
 async function checkAuth(){
-  const d=await fetch('/api/me').then(r=>r.json());
+  const d=await api.me();
   if(d.loggedIn){
     currentUser=d.user;
     document.getElementById('navActions').innerHTML=
@@ -166,7 +191,7 @@ async function checkAuth(){
 }
 
 async function loadCarTypes(){
-  const types=await fetch('/api/cartypes').then(r=>r.json());
+  const types=await api.carTypes();
   const sel=document.getElementById('typeFilter');
   types.forEach(t=>{
     const o=document.createElement('option');
@@ -176,7 +201,7 @@ async function loadCarTypes(){
 }
 
 async function loadCars(){
-  allCars=await fetch('/api/cars').then(r=>r.json());
+  allCars=await api.cars();
   renderCars(allCars);
 }
 
@@ -213,7 +238,7 @@ function highlightCar(id){
 }
 
 async function loadDrivers(){
-  const drivers=await fetch('/api/drivers').then(r=>r.json());
+  const drivers=await api.drivers();
   const g=document.getElementById('driverGrid');
   g.innerHTML=drivers.map(d=>`
     <div class="driver-card${d.available?'':' unavail'}" id="drvOpt${d.id}" onclick="${d.available?`selectDriver(${d.id})`:''}">
@@ -256,27 +281,40 @@ async function submitBooking(){
   const body={
     carId:selectedCarId, driverId:selectedDriverId,
     startDate:document.getElementById('startDate').value,
+    startTime:document.getElementById('startTime').value,
     endDate:document.getElementById('endDate').value,
+    endTime:document.getElementById('endTime').value,
     pickupLocation:document.getElementById('pickupLocation').value,
     dropoffLocation:document.getElementById('dropoffLocation').value,
     notes:document.getElementById('notes').value
   };
-  const res=await fetch('/api/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const data=await res.json();
+  const res2=await fetch('http://localhost:3000/api/bookings',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res2.json();
   if(data.success){
     const b=data.booking;
+    // map snake_case → ใช้งานใน template
+    const carName    = b.car_name        || b.carName        || '-';
+    const carIcon    = b.car_type_icon   || b.carTypeIcon    || '🚗';
+    const startDate  = new Date(b.start_date || b.startDate);
+    const endDate    = new Date(b.end_date   || b.endDate);
+    const startTime  = b.start_time      || b.startTime      || '';
+    const endTime    = b.end_time        || b.endTime        || '';
+    const pickup     = b.pickup_location || b.pickupLocation  || '-';
+    const driverName = b.driver_name     || b.driverName     || null;
+    const fmtDate    = d => isNaN(d) ? '-' : d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+
     document.getElementById('successContent').innerHTML=`
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:3.5rem;margin-bottom:.75rem">${b.carTypeIcon}</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">${b.carName}</div>
+        <div style="font-size:3.5rem;margin-bottom:.75rem">${carIcon}</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">${carName}</div>
         <div style="color:var(--muted);font-size:.875rem;margin-bottom:1.5rem">หมายเลขการจอง #${String(b.id).padStart(5,'0')}</div>
       </div>
       <div style="background:var(--surface2);border-radius:10px;padding:1rem;font-size:.875rem;line-height:2">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันรับรถ</span><span>${new Date(b.startDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันคืนรถ</span><span>${new Date(b.endDate).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันรับรถ</span><span>${fmtDate(startDate)} เวลา ${startTime}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">วันคืนรถ</span><span>${fmtDate(endDate)} เวลา ${endTime}</span></div>
         <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">ระยะเวลา</span><span>${b.days} วัน</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">จุดรับรถ</span><span>${b.pickupLocation}</span></div>
-        ${b.driverName?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">คนขับ</span><span>${b.driverName}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">จุดรับรถ</span><span>${pickup}</span></div>
+        ${driverName?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">คนขับ</span><span>${driverName}</span></div>`:''}
       </div>
       <p style="font-size:.8rem;color:var(--muted);text-align:center;margin-top:1rem">ทีมงานจะติดต่อกลับเพื่อยืนยันการจองเร็วๆ นี้</p>`;
     document.getElementById('successModal').classList.add('open');
@@ -290,19 +328,19 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
 
 async function login(){
-  const d=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+  const d=await fetch('http://localhost:3000/api/login',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({email:document.getElementById('loginEmail').value,password:document.getElementById('loginPassword').value})}).then(r=>r.json());
   if(d.success){closeModal('loginModal');location.reload();}
   else{const a=document.getElementById('loginAlert');a.className='alert show alert-error';a.textContent=d.message;}
 }
 async function register(){
-  const d=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},
+  const d=await fetch('http://localhost:3000/api/register',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({name:document.getElementById('regName').value,email:document.getElementById('regEmail').value,
       phone:document.getElementById('regPhone').value,password:document.getElementById('regPassword').value})}).then(r=>r.json());
   if(d.success){closeModal('registerModal');location.reload();}
   else{const a=document.getElementById('registerAlert');a.className='alert show alert-error';a.textContent=d.message;}
 }
-async function logout(){await fetch('/api/logout',{method:'POST'});location.reload();}
+async function logout(){await api.logout();location.reload();}
 
 init();
 </script>

@@ -84,9 +84,11 @@ CREATE TABLE IF NOT EXISTS mass.bookings (
     user_name        VARCHAR(100) NOT NULL,
     user_email       VARCHAR(150) NOT NULL,
 
-    -- วันที่
+    -- วันที่และเวลา
     start_date       DATE         NOT NULL,
+    start_time       TIME         NOT NULL DEFAULT '09:00',
     end_date         DATE         NOT NULL,
+    end_time         TIME         NOT NULL DEFAULT '17:00',
     days             SMALLINT     NOT NULL CHECK (days > 0),
 
     -- สถานที่

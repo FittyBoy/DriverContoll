@@ -1,49 +1,43 @@
-// ใช้ hostname เดียวกับ browser แต่ชี้ไป port 3000 (backend)
-const API = `${location.protocol}//${location.hostname}:3000`;
+// ── Backend URL ───────────────────────────────────────────────────────────────
+const API = 'http://localhost:3000';
 
-// ── Fetch interceptor ────────────────────────────────────────────────────────
-// Patches window.fetch so that any relative /api/ call in inline scripts
-// automatically gets the correct base URL and credentials: 'include'.
-(function () {
-  const _fetch = window.fetch.bind(window);
-  window.fetch = function (url, opts = {}) {
-    if (typeof url === 'string' && url.startsWith('/api/')) {
-      url = API + url;
-      opts = { credentials: 'include', ...opts };
-    }
-    return _fetch(url, opts);
-  };
-})();
-
-// ── Typed API client (used by pages that import api.js explicitly) ───────────
+// ── Fetch wrapper ─────────────────────────────────────────────────────────────
 async function apiFetch(path, options = {}) {
   const res = await fetch(API + path, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options
+    ...options,
   });
+  if (!res.ok && res.status !== 200) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
   return res.json();
 }
 
+// ── API methods ───────────────────────────────────────────────────────────────
 const api = {
-  get:    (path)       => apiFetch(path),
-  post:   (path, body) => apiFetch(path, { method: 'POST',   body: JSON.stringify(body) }),
-  put:    (path, body) => apiFetch(path, { method: 'PUT',    body: JSON.stringify(body) }),
-  delete: (path)       => apiFetch(path, { method: 'DELETE' }),
+  get:    (path)        => apiFetch(path),
+  post:   (path, body)  => apiFetch(path, { method: 'POST',   body: JSON.stringify(body) }),
+  put:    (path, body)  => apiFetch(path, { method: 'PUT',    body: JSON.stringify(body) }),
+  delete: (path)        => apiFetch(path, { method: 'DELETE' }),
 
+  // Auth
   me:       ()                => api.get('/api/me'),
   login:    (email, password) => api.post('/api/login', { email, password }),
   register: (data)            => api.post('/api/register', data),
   logout:   ()                => api.post('/api/logout', {}),
 
-  carTypes: ()          => api.get('/api/cartypes'),
-  drivers:  ()          => api.get('/api/drivers'),
-  cars:     (typeId)    => api.get('/api/cars' + (typeId ? `?typeId=${typeId}` : '')),
+  // Master data
+  carTypes: ()         => api.get('/api/cartypes'),
+  drivers:  ()         => api.get('/api/drivers'),
+  cars:     (typeId)   => api.get('/api/cars' + (typeId ? `?typeId=${typeId}` : '')),
 
-  myBookings:    ()     => api.get('/api/bookings/my'),
+  // Bookings
+  myBookings:    ()    => api.get('/api/bookings/my'),
   bookingsByCar: (carId, weekStart) =>
-    api.get(`/api/bookings/car/${carId}${weekStart ? '?weekStart='+weekStart : ''}`),
-  book: (data)          => api.post('/api/bookings', data),
+    api.get(`/api/bookings/car/${carId}${weekStart ? '?weekStart=' + weekStart : ''}`),
+  book: (data)         => api.post('/api/bookings', data),
 
   trips: (params) => {
     const q = new URLSearchParams(params || {}).toString();
