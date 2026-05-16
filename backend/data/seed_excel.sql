@@ -1,15 +1,15 @@
 -- ============================================================
---  AGC Microglass — Migration + Seed from Excel
+--  AGC Microglass - Migration + Seed from Excel
 --  9 May - 15 May 2026
 --  Run: psql -U postgres -d <db> -f seed_excel.sql
 -- ============================================================
 SET search_path TO mass;
 
--- ── 1. Add registration_plate column to drivers & cars ──────
+-- -- 1. Add registration_plate column to drivers & cars ------
 ALTER TABLE mass.drivers ADD COLUMN IF NOT EXISTS registration_plate VARCHAR(60);
 ALTER TABLE mass.cars    ADD COLUMN IF NOT EXISTS registration_plate VARCHAR(60);
 
--- ── 2. Create trips table ────────────────────────────────────
+-- -- 2. Create trips table ------------------------------------
 CREATE TABLE IF NOT EXISTS mass.trips (
     id                   SERIAL       PRIMARY KEY,
     trip_date            DATE         NOT NULL,
@@ -36,7 +36,7 @@ CREATE TRIGGER trg_trips_updated_at
     BEFORE UPDATE ON mass.trips
     FOR EACH ROW EXECUTE FUNCTION mass.set_updated_at();
 
--- ── 3. Clear old fake seed data, insert real drivers ─────────
+-- -- 3. Clear old fake seed data, insert real drivers ---------
 TRUNCATE mass.drivers RESTART IDENTITY CASCADE;
 
 INSERT INTO mass.drivers (name, phone, registration_plate, available, note) VALUES
@@ -62,7 +62,7 @@ INSERT INTO mass.drivers (name, phone, registration_plate, available, note) VALU
 
 SELECT setval('mass.drivers_id_seq', (SELECT MAX(id) FROM mass.drivers));
 
--- ── 4. Clear old fake cars, insert real fleet ─────────────────
+-- -- 4. Clear old fake cars, insert real fleet -----------------
 TRUNCATE mass.cars RESTART IDENTITY CASCADE;
 
 INSERT INTO mass.cars (name, car_type_id, seats, available, registration_plate, description) VALUES
@@ -87,7 +87,7 @@ INSERT INTO mass.cars (name, car_type_id, seats, available, registration_plate, 
 
 SELECT setval('mass.cars_id_seq', (SELECT MAX(id) FROM mass.cars));
 
--- ── 5. Reset admin user ───────────────────────────────────────
+-- -- 5. Reset admin user ---------------------------------------
 TRUNCATE mass.users RESTART IDENTITY CASCADE;
 INSERT INTO mass.users (name, email, password, role) VALUES
   ('Admin', 'admin@carbook.com',
@@ -95,7 +95,7 @@ INSERT INTO mass.users (name, email, password, role) VALUES
    'admin');
 SELECT setval('mass.users_id_seq', (SELECT MAX(id) FROM mass.users));
 
--- ── 6. Seed trips from 9 May - 15 May 2026 ───────────────────
+-- -- 6. Seed trips from 9 May - 15 May 2026 -------------------
 TRUNCATE mass.trips RESTART IDENTITY;
 
 INSERT INTO mass.trips
@@ -317,4 +317,4 @@ VALUES
 SELECT setval('mass.trips_id_seq', (SELECT MAX(id) FROM mass.trips));
 
 -- Done
-\echo '✅ Seed complete: drivers=19, cars=18, trips imported'
+DO $$ BEGIN RAISE NOTICE 'Seed complete: drivers=19, cars=18, trips imported'; END $$;
