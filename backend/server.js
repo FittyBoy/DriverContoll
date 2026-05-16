@@ -305,11 +305,12 @@ app.delete('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
 
 app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
   try {
-    const [bk, cars, drivers, types] = await Promise.all([
+    const [bk, cars, drivers, types, trips] = await Promise.all([
       query(`SELECT status, COUNT(*)::int AS cnt FROM bookings GROUP BY status`),
       queryOne('SELECT COUNT(*)::int AS cnt FROM cars'),
       queryOne('SELECT COUNT(*)::int AS cnt FROM drivers'),
       queryOne('SELECT COUNT(*)::int AS cnt FROM car_types'),
+      queryOne('SELECT COUNT(*)::int AS cnt FROM trips WHERE trip_date = CURRENT_DATE'),
     ]);
     const byStatus = Object.fromEntries(bk.map(r => [r.status, r.cnt]));
     res.json({
@@ -321,8 +322,81 @@ app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
       totalCars:     cars.cnt,
       totalDrivers:  drivers.cnt,
       totalCarTypes: types.cnt,
+      tripsToday:    trips?.cnt || 0,
     });
   } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+// ── TRIPS (ตารางจัดรถรายวัน) ───────────────────────────────────────────────
+app.get('/api/trips', async (req, res) => {
+  try {
+    const { date, weekStart, driverName } = req.query;
+    let sql = 'SELECT * FROM trips WHERE 1=1';
+    const params = [];
+    if (date) {
+      params.push(date);
+      sql += ` AND trip_date = $${params.length}`;
+    } else if (weekStart) {
+      params.push(weekStart);
+      sql += ` AND trip_date >= $${params.length}::date AND trip_date <= ($${params.length}::date + INTERVAL '6 days')`;
+    }
+    if (driverName) {
+      params.push(`%${driverName}%`);
+      sql += ` AND driver_name ILIKE $${params.length}`;
+    }
+    sql += ' ORDER BY trip_date, pickup_time, id';
+    res.json(await query(sql, params));
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+app.get('/api/trips/dates', async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT DISTINCT trip_date::text, COUNT(*)::int AS cnt
+       FROM trips GROUP BY trip_date ORDER BY trip_date DESC LIMIT 90`
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+app.post('/api/trips', requireAdmin, async (req, res) => {
+  try {
+    const { tripDate, carTypeLabel, driverName, registrationPlate, phone,
+            passengerName, pickupLocation, dropoffLocation, pickupTime, remarks } = req.body;
+    if (!tripDate || !passengerName || !pickupLocation || !dropoffLocation)
+      return res.json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบ' });
+    const row = await queryOne(
+      `INSERT INTO trips (trip_date, car_type_label, driver_name, registration_plate, phone,
+         passenger_name, pickup_location, dropoff_location, pickup_time, remarks)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+      [tripDate, carTypeLabel||'', driverName||'', registrationPlate||'', phone||'',
+       passengerName, pickupLocation, dropoffLocation, pickupTime||'', remarks||'']
+    );
+    res.json({ success: true, id: row.id });
+  } catch (e) { res.json({ success: false, message: e.message }); }
+});
+
+app.put('/api/trips/:id', requireAdmin, async (req, res) => {
+  try {
+    const { tripDate, carTypeLabel, driverName, registrationPlate, phone,
+            passengerName, pickupLocation, dropoffLocation, pickupTime, remarks, status } = req.body;
+    await query(
+      `UPDATE trips SET trip_date=$1, car_type_label=$2, driver_name=$3, registration_plate=$4,
+         phone=$5, passenger_name=$6, pickup_location=$7, dropoff_location=$8,
+         pickup_time=$9, remarks=$10, status=$11 WHERE id=$12`,
+      [tripDate, carTypeLabel||'', driverName||'', registrationPlate||'', phone||'',
+       passengerName, pickupLocation, dropoffLocation, pickupTime||'', remarks||'',
+       status||'scheduled', req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
+});
+
+app.delete('/api/trips/:id', requireAdmin, async (req, res) => {
+  try {
+    await query('DELETE FROM trips WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, message: e.message }); }
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────

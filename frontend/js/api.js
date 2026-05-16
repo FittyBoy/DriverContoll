@@ -45,6 +45,12 @@ const api = {
     api.get(`/api/bookings/car/${carId}${weekStart ? '?weekStart='+weekStart : ''}`),
   book: (data)          => api.post('/api/bookings', data),
 
+  trips: (params) => {
+    const q = new URLSearchParams(params || {}).toString();
+    return api.get('/api/trips' + (q ? '?' + q : ''));
+  },
+  tripDates: () => api.get('/api/trips/dates'),
+
   admin: {
     stats:         ()         => api.get('/api/admin/stats'),
     bookings:      ()         => api.get('/api/admin/bookings'),
@@ -59,5 +65,8 @@ const api = {
     addCar:        (data)     => api.post('/api/cars', data),
     updateCar:     (id, data) => api.put(`/api/cars/${id}`, data),
     deleteCar:     (id)       => api.delete(`/api/cars/${id}`),
+    addTrip:       (data)     => api.post('/api/trips', data),
+    updateTrip:    (id, data) => api.put(`/api/trips/${id}`, data),
+    deleteTrip:    (id)       => api.delete(`/api/trips/${id}`),
   }
 };
