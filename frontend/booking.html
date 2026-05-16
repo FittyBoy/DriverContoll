@@ -181,7 +181,7 @@ async function init(){
 }
 
 async function checkAuth(){
-  const d=await fetch('/api/me').then(r=>r.json());
+  const d=await api.me();
   if(d.loggedIn){
     currentUser=d.user;
     document.getElementById('navActions').innerHTML=
@@ -191,7 +191,7 @@ async function checkAuth(){
 }
 
 async function loadCarTypes(){
-  const types=await fetch('/api/cartypes').then(r=>r.json());
+  const types=await api.carTypes();
   const sel=document.getElementById('typeFilter');
   types.forEach(t=>{
     const o=document.createElement('option');
@@ -201,7 +201,7 @@ async function loadCarTypes(){
 }
 
 async function loadCars(){
-  allCars=await fetch('/api/cars').then(r=>r.json());
+  allCars=await api.cars();
   renderCars(allCars);
 }
 
@@ -238,7 +238,7 @@ function highlightCar(id){
 }
 
 async function loadDrivers(){
-  const drivers=await fetch('/api/drivers').then(r=>r.json());
+  const drivers=await api.drivers();
   const g=document.getElementById('driverGrid');
   g.innerHTML=drivers.map(d=>`
     <div class="driver-card${d.available?'':' unavail'}" id="drvOpt${d.id}" onclick="${d.available?`selectDriver(${d.id})`:''}">
@@ -288,8 +288,8 @@ async function submitBooking(){
     dropoffLocation:document.getElementById('dropoffLocation').value,
     notes:document.getElementById('notes').value
   };
-  const res=await fetch('/api/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const data=await res.json();
+  const res2=await fetch('http://localhost:3000/api/bookings',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res2.json();
   if(data.success){
     const b=data.booking;
     document.getElementById('successContent').innerHTML=`
@@ -317,19 +317,19 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
 
 async function login(){
-  const d=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+  const d=await fetch('http://localhost:3000/api/login',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({email:document.getElementById('loginEmail').value,password:document.getElementById('loginPassword').value})}).then(r=>r.json());
   if(d.success){closeModal('loginModal');location.reload();}
   else{const a=document.getElementById('loginAlert');a.className='alert show alert-error';a.textContent=d.message;}
 }
 async function register(){
-  const d=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},
+  const d=await fetch('http://localhost:3000/api/register',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({name:document.getElementById('regName').value,email:document.getElementById('regEmail').value,
       phone:document.getElementById('regPhone').value,password:document.getElementById('regPassword').value})}).then(r=>r.json());
   if(d.success){closeModal('registerModal');location.reload();}
   else{const a=document.getElementById('registerAlert');a.className='alert show alert-error';a.textContent=d.message;}
 }
-async function logout(){await fetch('/api/logout',{method:'POST'});location.reload();}
+async function logout(){await api.logout();location.reload();}
 
 init();
 </script>
