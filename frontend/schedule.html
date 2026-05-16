@@ -212,7 +212,8 @@ function populateDropdown() {
   const prev = sel.value;
   sel.innerHTML = '<option value="">— เลือกรถ —</option>';
   carTypes.forEach(ct => {
-    const carsInType = allCars.filter(c => c.carTypeId === ct.id);
+    // รองรับ snake_case (car_type_id) และ camelCase (carTypeId)
+    const carsInType = allCars.filter(c => (c.car_type_id || c.carTypeId) === ct.id);
     if (!carsInType.length) return;
     const og = document.createElement('optgroup');
     og.label = `${ct.icon} ${ct.name}`;
@@ -286,7 +287,9 @@ async function render() {
 
   days.forEach(day => {
     const dayBk = carBookings.filter(b => {
-      const s = new Date(b.startDate); s.setHours(0,0,0,0);
+      // รองรับ snake_case และ camelCase
+      const raw = b.start_date || b.startDate;
+      const s = new Date(raw); s.setHours(0,0,0,0);
       return s.getTime() === day.getTime();
     });
 
@@ -294,23 +297,34 @@ async function render() {
     HOURS.forEach(() => { html += '<div class="hour-row"></div>'; });
 
     dayBk.forEach(b => {
-      const s    = new Date(b.startDate);
-      const e    = new Date(b.endDate);
-      // Use startDate/endDate as day-level for now; for time-level use stored hours if available
-      // Since current schema stores only dates, show as full-day block offset by status
-      const sh   = s.getHours() || 8;
-      const eh   = e.getHours() || (sh + b.days * 8) > 22 ? 18 : sh + 2;
-      const top  = (sh - START_H) * SLOT_H;
-      const ht   = Math.max((eh - sh) * SLOT_H - 2, 24);
-      if (top < 0) return;
-      const cls  = `bk bk-${b.status||'pending'}`;
-      const dur  = `${pad(sh)}:00 – ${pad(eh)}:00`;
+      // รองรับ snake_case และ camelCase
+      const startTime  = b.start_time || b.startTime || '08:00:00';
+      const endTime    = b.end_time   || b.endTime   || '17:00:00';
+      const carName    = b.car_name   || b.carName   || car?.name || '';
+      const driverName = b.driver_name|| b.driverName|| '';
+      const pickup     = b.pickup_location || b.pickupLocation || '';
+
+      const sh = parseInt(startTime.split(':')[0]);
+      const sm = parseInt(startTime.split(':')[1]);
+      const eh = parseInt(endTime.split(':')[0]);
+      const em = parseInt(endTime.split(':')[1]);
+
+      const top = (sh + sm/60 - START_H) * SLOT_H;
+      const ht  = Math.max(((eh + em/60) - (sh + sm/60)) * SLOT_H - 2, 24);
+      if (top < 0 || ht <= 0) return;
+
+      const cls = `bk bk-${b.status||'pending'}`;
+      const dur = `${pad(sh)}:${pad(sm)} – ${pad(eh)}:${pad(em)}`;
+      const safeCarName    = carName.replace(/'/g,"\'");
+      const safeDur        = dur;
+      const safePickup     = pickup.replace(/'/g,"\'");
+      const safeDriverName = driverName.replace(/'/g,"\'");
+
       html += `<div class="${cls}" style="top:${top}px;height:${ht}px"
-        data-bid="${b.id}"
-        onmouseenter="showTip(event,'${b.carName||car?.name}','${dur}','${b.pickupLocation||''}','${b.status}','${b.driverName||''}')"
+        onmouseenter="showTip(event,'${safeCarName}','${safeDur}','${safePickup}','${b.status}','${safeDriverName}')"
         onmouseleave="hideTip()">
-        <div class="bk-title">${b.carName||car?.name||''}</div>
-        <div class="bk-sub">${dur}${b.driverName?' · '+b.driverName:''}</div>
+        <div class="bk-title">${carName}</div>
+        <div class="bk-sub">${dur}${driverName ? ' · '+driverName : ''}</div>
       </div>`;
     });
 
