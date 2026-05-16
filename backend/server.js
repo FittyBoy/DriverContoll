@@ -350,6 +350,43 @@ app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
+// ── Schedule (all cars × week) ─────────────────────────────────────────────
+app.get('/api/schedule', async (req, res) => {
+  try {
+    const { weekStart } = req.query;
+    if (!weekStart) return res.status(400).json({ message: 'weekStart required' });
+
+    const [bResult, cResult] = await Promise.all([
+      query(`
+        SELECT
+          b.id, b.car_id, b.car_name, b.car_type_id, b.car_type_name, b.car_type_icon,
+          b.driver_name, b.user_name,
+          to_char(b.start_date, 'YYYY-MM-DD') AS start_date,
+          to_char(b.end_date,   'YYYY-MM-DD') AS end_date,
+          to_char(b.start_time, 'HH24:MI')    AS start_time,
+          to_char(b.end_time,   'HH24:MI')    AS end_time,
+          b.status, b.pickup_location, b.dropoff_location, b.notes, b.days
+        FROM bookings b
+        WHERE b.status IN ('pending','confirmed','completed')
+          AND b.start_date <= ($1::date + INTERVAL '6 days')
+          AND b.end_date   >= $1::date
+        ORDER BY b.car_id, b.start_date, b.start_time
+      `, [weekStart]),
+      query(`
+        SELECT c.id, c.name, c.seats, c.description,
+               ct.id AS type_id, ct.name AS type_name, ct.icon AS type_icon
+        FROM cars c JOIN car_types ct ON ct.id = c.car_type_id
+        ORDER BY ct.name, c.name
+      `)
+    ]);
+
+    res.json({ bookings: bResult.rows, cars: cResult.rows });
+  } catch (e) {
+    console.error('❌', req.method, req.path, e.message);
+    res.status(500).json({ message: e.message });
+  }
+});
+
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚗 AGC Microglass API  →  http://localhost:${PORT}`);
