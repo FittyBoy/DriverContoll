@@ -1,11 +1,11 @@
 {
-  "name": "driveelite",
+  "name": "agc-microglass-carbooking",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npm-run-all --parallel dev:backend dev:frontend",
-    "dev:backend": "cd backend && node server.js",
-    "dev:frontend": "cd frontend && npx http-server . -p 5500 --cors --ext html -o"
+    "dev":          "npm-run-all --parallel dev:backend dev:frontend",
+    "dev:backend":  "cd backend && node server.js",
+    "dev:frontend": "cd frontend && npx serve . -l 5500"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

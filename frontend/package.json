@@ -1,12 +1,12 @@
 {
   "name": "driveelite-frontend",
   "version": "1.0.0",
-  "description": "DriveElite — Frontend (Static HTML/CSS/JS)",
+  "description": "AGC Microglass — Frontend (Static HTML/CSS/JS)",
   "scripts": {
-    "dev": "npx http-server . -p 5500 --cors --ext html -o",
-    "start": "npx http-server . -p 5500 --cors --ext html"
+    "dev":   "npx serve . -l 5500",
+    "start": "npx serve . -l 5500"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "serve": "^14.2.4"
   }
 }

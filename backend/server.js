@@ -13,8 +13,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5500';
 
 // ── Middleware ─────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: (origin, cb) => cb(null, true),   // รับทุก origin (local dev)
-  credentials: true
+  origin: true,        // สะท้อน origin กลับ — ทำงานกับ credentials: include
+  credentials: true,   // จำเป็นสำหรับ session cookie ข้าม port
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
