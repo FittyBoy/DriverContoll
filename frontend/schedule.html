@@ -8,133 +8,174 @@
   <style>
     .sch-page { padding: 5.5rem 0 3rem; min-height: 100vh; }
 
-    /* topbar */
+    /* ── topbar ── */
     .sch-topbar {
-      display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
-      padding:.9rem 1.75rem;border-bottom:1px solid var(--border);
-      background:var(--surface);position:sticky;top:56px;z-index:10;
+      display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;
+      padding:.7rem 1.5rem; border-bottom:1px solid var(--border);
+      background:var(--surface); position:sticky; top:56px; z-index:20;
     }
     .stat-badge {
-      display:flex;align-items:center;gap:.45rem;padding:.3rem .75rem;
-      border-radius:100px;background:var(--surface2);border:1px solid var(--border);
-      font-size:.78rem;font-weight:600;color:var(--text);white-space:nowrap;
+      display:flex; align-items:center; gap:.4rem; padding:.28rem .7rem;
+      border-radius:100px; background:var(--surface2); border:1px solid var(--border);
+      font-size:.76rem; font-weight:600; color:var(--text); white-space:nowrap;
     }
-    .stat-badge .num{color:var(--accent);font-size:.95rem;}
-    .topbar-sep{flex:1;}
-    .search-wrap{position:relative;}
-    .search-wrap input{
-      background:var(--surface2);border:1px solid var(--border);
-      border-radius:8px;padding:.4rem .75rem .4rem 2.1rem;
-      color:var(--text);font-size:.82rem;width:210px;
-    }
-    .search-wrap input:focus{outline:none;border-color:var(--accent);}
-    .search-icon{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);opacity:.4;font-size:.8rem;}
+    .stat-badge .num { color:var(--accent); font-size:.92rem; }
+    .sep { flex:1; }
 
-    /* nav */
+    /* car dropdown */
+    .car-select-wrap { position:relative; }
+    .car-select-wrap select {
+      appearance:none; -webkit-appearance:none;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:.8rem;
+      padding:.38rem 2rem .38rem .85rem; cursor:pointer; outline:none;
+      transition:border-color .15s; min-width:180px;
+    }
+    .car-select-wrap select:focus { border-color:var(--accent); }
+    .car-select-wrap::after {
+      content:'▾'; position:absolute; right:.6rem; top:50%;
+      transform:translateY(-50%); pointer-events:none;
+      font-size:.65rem; color:var(--muted);
+    }
+
+    /* ── nav bar ── */
     .sch-nav {
-      display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
-      padding:.6rem 1.75rem;border-bottom:1px solid var(--border);
-      background:var(--surface);position:sticky;top:calc(56px + 44px);z-index:10;
+      display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+      padding:.55rem 1.5rem; border-bottom:1px solid var(--border);
+      background:var(--surface); position:sticky; top:calc(56px + 44px); z-index:19;
     }
-    .nav-date{font-size:.85rem;font-weight:600;color:var(--text);min-width:220px;text-align:center;}
-    .nbtn{
-      background:var(--surface2);border:1px solid var(--border);border-radius:7px;
-      padding:.35rem .75rem;font-size:.8rem;color:var(--text);cursor:pointer;transition:all .15s;
+    .nav-date { font-size:.82rem; font-weight:600; color:var(--text); min-width:200px; text-align:center; }
+    .nbtn {
+      background:var(--surface2); border:1px solid var(--border); border-radius:7px;
+      padding:.3rem .7rem; font-size:.78rem; color:var(--text); cursor:pointer; transition:all .15s;
     }
-    .nbtn:hover,.nbtn.accent{border-color:var(--accent);color:var(--accent);}
-    .nav-right{margin-left:auto;display:flex;gap:.4rem;}
-    .fbtn{
-      padding:.3rem .65rem;font-size:.73rem;border-radius:6px;
-      border:1px solid var(--border);background:var(--surface2);color:var(--muted);
-      cursor:pointer;transition:all .15s;
+    .nbtn:hover,.nbtn.today { border-color:var(--accent); color:var(--accent); }
+    .nav-right { margin-left:auto; display:flex; gap:.35rem; }
+    .fbtn {
+      padding:.28rem .6rem; font-size:.71rem; border-radius:6px;
+      border:1px solid var(--border); background:var(--surface2); color:var(--muted);
+      cursor:pointer; transition:all .15s;
     }
-    .fbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+    .fbtn.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
 
-    /* grid */
-    .grid-wrap{overflow-x:auto;}
-    .rgrid{min-width:800px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+    /* ── timeline container ── */
+    .tl-outer { overflow-x:auto; }
 
-    .rg-head{
-      display:grid;grid-template-columns:155px repeat(7,1fr);
-      background:var(--surface2);border-bottom:2px solid var(--border);
-      position:sticky;top:calc(56px+44px+41px);z-index:9;
+    .tl-grid {
+      display:grid;
+      /* col 0 = car label 160px, then 1 col per hour (06–22 = 16 cols) */
+      grid-template-columns: 160px repeat(16, minmax(64px, 1fr));
+      min-width:860px;
+      border-left:1px solid var(--border);
+      border-right:1px solid var(--border);
     }
-    .rg-h0{padding:.55rem .75rem;font-size:.68rem;color:var(--muted);border-right:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;}
-    .rg-hd{
-      padding:.45rem .3rem;text-align:center;border-right:1px solid var(--border);
-    }
-    .rg-hd:last-child{border-right:none;}
-    .hd-dow{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
-    .hd-num{font-size:1.2rem;font-weight:700;color:var(--text);line-height:1.1;}
-    .hd-mon{font-size:.63rem;color:var(--muted);}
-    .rg-hd.today .hd-num,.rg-hd.today .hd-dow{color:var(--accent);}
 
-    .rg-type{
-      display:grid;grid-template-columns:155px 1fr;
+    /* sticky hour header */
+    .tl-head {
+      display:contents;
+      position:sticky; top:calc(56px+44px+41px); z-index:18;
+    }
+    .tl-h0 {
+      grid-column:1; background:var(--surface2);
+      border-bottom:2px solid var(--border); border-right:1px solid var(--border);
+      padding:.45rem .7rem; font-size:.64rem; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.06em; position:sticky; top:calc(56px+44px+41px);
+    }
+    .tl-hh {
+      background:var(--surface2); border-bottom:2px solid var(--border);
+      border-right:1px solid var(--border); text-align:center;
+      padding:.4rem .2rem; font-size:.68rem; color:var(--muted);
+      letter-spacing:.04em; position:sticky; top:calc(56px+44px+41px);
+    }
+    .tl-hh:last-child { border-right:none; }
+    .tl-hh.now-col { color:var(--accent); border-bottom-color:var(--accent); }
+
+    /* type separator row */
+    .tl-type-row {
+      grid-column: 1 / -1;
+      padding:.28rem .75rem;
       background:rgba(255,255,255,.022);
-      border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-    }
-    .rg-type-lbl{
-      padding:.32rem .75rem;font-size:.7rem;font-weight:700;color:var(--muted);
-      text-transform:uppercase;letter-spacing:.07em;border-right:1px solid var(--border);
-      display:flex;align-items:center;gap:.35rem;
+      border-top:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      font-size:.68rem; font-weight:700; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.07em;
+      display:flex; align-items:center; gap:.35rem;
     }
 
-    .rg-row{display:grid;grid-template-columns:155px repeat(7,1fr);border-bottom:1px solid var(--border);}
-    .rg-row:hover{background:rgba(255,255,255,.016);}
-    .rg-row:last-child{border-bottom:none;}
-
-    .rg-car{
-      padding:.5rem .75rem;border-right:1px solid var(--border);
-      display:flex;flex-direction:column;justify-content:center;min-height:52px;
+    /* car row label */
+    .tl-car-lbl {
+      padding:.5rem .7rem; border-right:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      display:flex; flex-direction:column; justify-content:center; min-height:54px;
     }
-    .rg-car-name{font-size:.78rem;font-weight:600;color:var(--text);}
-    .rg-car-meta{font-size:.66rem;color:var(--muted);margin-top:2px;}
+    .tl-car-name { font-size:.76rem; font-weight:600; color:var(--text); }
+    .tl-car-meta { font-size:.63rem; color:var(--muted); margin-top:2px; }
 
-    .rg-cell{
-      padding:3px 3px;border-right:1px solid var(--border);
-      min-height:52px;display:flex;flex-direction:column;gap:2px;
+    /* hour cell */
+    .tl-cell {
+      position:relative; border-right:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      min-height:54px; overflow:visible;
     }
-    .rg-cell:last-child{border-right:none;}
-    .rg-cell.today-col{background:rgba(56,138,221,.04);}
-    .rg-cell.wknd{background:rgba(255,255,255,.01);}
+    .tl-cell:last-child { border-right:none; }
+    .tl-cell.now-col::before {
+      content:''; position:absolute; inset:0;
+      background:rgba(232,240,74,.04); pointer-events:none;
+    }
+    .tl-cell.wknd { background:rgba(255,255,255,.008); }
 
-    .bk{
-      border-radius:5px;padding:3px 5px;font-size:.66rem;line-height:1.35;
-      cursor:pointer;transition:filter .1s;border-left:3px solid transparent;overflow:hidden;
+    /* booking block inside a cell — can span multiple columns */
+    .bk-block {
+      position:absolute; top:4px; bottom:4px;
+      border-radius:5px; padding:3px 6px;
+      font-size:.65rem; line-height:1.35; cursor:pointer;
+      transition:filter .12s, box-shadow .12s; border-left:3px solid transparent;
+      overflow:hidden; white-space:nowrap; z-index:2;
+      pointer-events:auto;
     }
-    .bk:hover{filter:brightness(1.15);}
-    .bk-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .bk-sub{opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .bk-confirmed{background:rgba(56,138,221,.18);border-color:#378ADD;color:#85b7eb;}
-    .bk-pending  {background:rgba(186,117,23,.22); border-color:#BA7517;color:#FAC775;}
-    .bk-completed{background:rgba(76,175,138,.18); border-color:#4caf8a;color:#9FE1CB;}
-    .bk-cancelled{background:rgba(224,85,85,.13);  border-color:#e05555;color:#F09595;}
+    .bk-block:hover { filter:brightness(1.18); box-shadow:0 2px 10px rgba(0,0,0,.4); }
+    .bk-name { font-weight:600; overflow:hidden; text-overflow:ellipsis; }
+    .bk-sub  { opacity:.8; overflow:hidden; text-overflow:ellipsis; }
+    .bk-confirmed { background:rgba(56,138,221,.2); border-color:#378ADD; color:#85b7eb; }
+    .bk-pending   { background:rgba(186,117,23,.25); border-color:#BA7517; color:#FAC775; }
+    .bk-completed { background:rgba(76,175,138,.2);  border-color:#4caf8a; color:#9FE1CB; }
+    .bk-cancelled { background:rgba(224,85,85,.15);  border-color:#e05555; color:#F09595; }
+
+    /* current time line */
+    .now-line {
+      position:absolute; top:0; bottom:0; width:2px;
+      background:var(--accent); z-index:10; pointer-events:none;
+    }
+    .now-dot {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      width:8px; height:8px; border-radius:50%; background:var(--accent);
+    }
 
     /* legend */
-    .sch-leg{
-      display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;
-      padding:.6rem 1.75rem;border-top:1px solid var(--border);
-      font-size:.75rem;color:var(--muted);
+    .sch-leg {
+      display:flex; gap:1.2rem; flex-wrap:wrap; align-items:center;
+      padding:.55rem 1.5rem; border-top:1px solid var(--border);
+      font-size:.73rem; color:var(--muted);
     }
-    .leg{display:flex;align-items:center;gap:.4rem;}
-    .leg-dot{width:10px;height:10px;border-radius:2px;border:1px solid;}
+    .leg { display:flex; align-items:center; gap:.35rem; }
+    .leg-dot { width:10px; height:10px; border-radius:2px; border:1px solid; }
 
     /* tooltip */
-    .tip{
-      position:fixed;background:var(--surface);border:1px solid var(--border);
-      border-radius:10px;padding:.7rem .95rem;font-size:.78rem;z-index:999;
-      pointer-events:none;min-width:190px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4);
+    .tip {
+      position:fixed; background:var(--surface); border:1px solid var(--border);
+      border-radius:10px; padding:.65rem .9rem; font-size:.76rem; z-index:999;
+      pointer-events:none; min-width:185px; display:none;
+      box-shadow:0 8px 32px rgba(0,0,0,.45);
     }
-    .tip-car{font-weight:700;font-size:.83rem;color:var(--text);margin-bottom:.3rem;}
-    .tip-row{color:var(--muted);margin:2px 0;}
-    .tip-badge{
-      display:inline-block;padding:2px 8px;border-radius:100px;
-      font-size:.68rem;margin-top:.3rem;
+    .tip-car  { font-weight:700; font-size:.82rem; color:var(--text); margin-bottom:.3rem; }
+    .tip-row  { color:var(--muted); margin:2px 0; }
+    .tip-badge {
+      display:inline-block; padding:2px 8px; border-radius:100px;
+      font-size:.66rem; margin-top:.3rem;
     }
 
-    .sch-loading{display:flex;justify-content:center;padding:4rem;}
-    .sch-empty{text-align:center;padding:4rem;color:var(--muted);font-size:.9rem;}
+    .sch-loading { display:flex; justify-content:center; padding:4rem; }
+    .sch-empty   { text-align:center; padding:4rem; color:var(--muted); font-size:.88rem; }
   </style>
 </head>
 <body>
@@ -155,23 +196,23 @@
 </nav>
 
 <div class="sch-page">
+
+  <!-- topbar: stats + car dropdown + search -->
   <div class="sch-topbar">
     <div class="stat-badge"><span class="num" id="stTrips">—</span>&nbsp;TRIPS</div>
     <div class="stat-badge"><span class="num" id="stVeh">—</span>&nbsp;vehicles</div>
     <div class="stat-badge"><span class="num" id="stDrv">—</span>&nbsp;drivers</div>
-    <div class="topbar-sep"></div>
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchBox" placeholder="Search driver / passenger…" oninput="applySearch()">
-    </div>
-  </div>
+    <div class="sep"></div>
 
-  <div class="sch-nav">
-    <button class="nbtn" onclick="shiftWeek(-1)">←</button>
-    <div class="nav-date" id="navDate">—</div>
-    <button class="nbtn" onclick="shiftWeek(1)">→</button>
-    <button class="nbtn accent" onclick="goToday()">Today</button>
-    <div class="nav-right">
+    <!-- car dropdown -->
+    <div class="car-select-wrap">
+      <select id="carSelect" onchange="applyCarFilter()">
+        <option value="all">🚗 All vehicles</option>
+      </select>
+    </div>
+
+    <!-- status filter -->
+    <div style="display:flex;gap:.3rem">
       <button class="fbtn active" data-s="all"       onclick="setFilter('all')">All</button>
       <button class="fbtn"        data-s="confirmed" onclick="setFilter('confirmed')">Confirmed</button>
       <button class="fbtn"        data-s="pending"   onclick="setFilter('pending')">Pending</button>
@@ -179,7 +220,19 @@
     </div>
   </div>
 
-  <div class="grid-wrap" id="gridWrap">
+  <!-- nav: week navigation -->
+  <div class="sch-nav">
+    <button class="nbtn" onclick="shiftWeek(-1)">←</button>
+    <div class="nav-date" id="navDate">—</div>
+    <button class="nbtn" onclick="shiftWeek(1)">→</button>
+    <button class="nbtn today" onclick="goToday()">Today</button>
+    <div class="nav-right">
+      <button class="nbtn" id="btnPrevDay" onclick="shiftDay(-1)" title="วันก่อน">‹ Day</button>
+      <button class="nbtn" id="btnNextDay" onclick="shiftDay(1)"  title="วันถัดไป">Day ›</button>
+    </div>
+  </div>
+
+  <div class="tl-outer" id="tlOuter">
     <div class="sch-loading"><div class="loading"><span></span><span></span><span></span></div></div>
   </div>
 
@@ -193,9 +246,13 @@
 
 <div class="tip" id="tip"></div>
 
+<!-- login modal -->
 <div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal',event)">
   <div class="modal">
-    <div class="modal-header"><div class="modal-title">เข้าสู่ระบบ</div><button class="modal-close" onclick="closeModal('loginModal')">✕</button></div>
+    <div class="modal-header">
+      <div class="modal-title">เข้าสู่ระบบ</div>
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    </div>
     <div class="modal-body">
       <div class="alert" id="loginAlert"></div>
       <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" id="loginEmail"></div>
@@ -208,14 +265,39 @@
 
 <script src="js/api.js"></script>
 <script>
+/* ── Constants ──────────────────────────────────────────────────── */
 const DOW   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const S_TH  = {confirmed:'Confirmed',pending:'Pending',completed:'Completed',cancelled:'Cancelled'};
 const S_COL = {confirmed:'#378ADD',pending:'#BA7517',completed:'#4caf8a',cancelled:'#e05555'};
 const S_BG  = {confirmed:'rgba(56,138,221,.18)',pending:'rgba(186,117,23,.22)',completed:'rgba(76,175,138,.18)',cancelled:'rgba(224,85,85,.13)'};
 
-let baseDate=new Date(), allCars=[], allBks=[], filterS='all', searchQ='';
+// Timeline: 06:00 – 21:00 (16 hours)
+const HOUR_START = 6;
+const HOUR_END   = 22;   // exclusive → columns 06,07,...,21
+const N_HOURS    = HOUR_END - HOUR_START;  // 16
 
+/* ── State ──────────────────────────────────────────────────────── */
+let baseDate = new Date();
+let allCars  = [], allBks = [];
+let filterS  = 'all';
+let carFilter = 'all';   // 'all' or car.id
+
+/* ── Helpers ────────────────────────────────────────────────────── */
+function getMonday(d){ const dt=new Date(d); dt.setHours(0,0,0,0); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
+function toYMD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function getDays(){ const m=getMonday(baseDate); return Array.from({length:7},(_,i)=>{ const d=new Date(m); d.setDate(d.getDate()+i); return d; }); }
+function shiftWeek(n){ baseDate.setDate(baseDate.getDate()+n*7); load(); }
+function shiftDay(n) { baseDate.setDate(baseDate.getDate()+n);   load(); }
+function goToday()   { baseDate=new Date(); load(); }
+
+function parseTime(t){ // "HH:MM" or "HH.MM" → decimal hours
+  if(!t) return null;
+  const p=String(t).replace(':','.').split('.');
+  return parseInt(p[0])+(parseInt(p[1]||0)/60);
+}
+
+/* ── Init ───────────────────────────────────────────────────────── */
 async function init(){
   try{ const m=await api.me(); if(m.loggedIn) renderNav(m.user); }catch(e){}
   await load();
@@ -235,14 +317,9 @@ function renderNav(u){
 function toggleMenu(){ document.getElementById('userMenu')?.classList.toggle('open'); }
 document.addEventListener('click',e=>{ if(!e.target.closest('.user-menu-wrap')) document.getElementById('userMenu')?.classList.remove('open'); });
 
-function getMonday(d){ const dt=new Date(d); dt.setHours(0,0,0,0); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
-function shiftWeek(n){ baseDate.setDate(baseDate.getDate()+n*7); load(); }
-function goToday()   { baseDate=new Date(); load(); }
-function getDays()   { const m=getMonday(baseDate); return Array.from({length:7},(_,i)=>{ const d=new Date(m); d.setDate(d.getDate()+i); return d; }); }
-function toYMD(d)    { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-
+/* ── Load data ──────────────────────────────────────────────────── */
 async function load(){
-  document.getElementById('gridWrap').innerHTML='<div class="sch-loading"><div class="loading"><span></span><span></span><span></span></div></div>';
+  document.getElementById('tlOuter').innerHTML='<div class="sch-loading"><div class="loading"><span></span><span></span><span></span></div></div>';
   const days=getDays();
   const fmt=d=>`${DOW[d.getDay()]} ${d.getDate()} ${MONS[d.getMonth()]} ${d.getFullYear()}`;
   document.getElementById('navDate').textContent=`${fmt(days[0])}  —  ${fmt(days[6])}`;
@@ -250,20 +327,56 @@ async function load(){
     const data=await apiFetch(`/api/schedule?weekStart=${toYMD(days[0])}`);
     allCars=data.cars||[]; allBks=data.bookings||[];
   }catch(e){ allCars=[]; allBks=[]; }
-  updateStats(); render(days);
+  populateCarDropdown();
+  updateStats();
+  render(days);
 }
 
-function filtered(){ return allBks.filter(b=>{
-  if(filterS!=='all'&&b.status!==filterS) return false;
-  if(searchQ){ const q=searchQ.toLowerCase(); return (b.user_name||'').toLowerCase().includes(q)||(b.driver_name||'').toLowerCase().includes(q)||(b.car_name||'').toLowerCase().includes(q); }
-  return true;
-}); }
+/* ── Populate dropdown ──────────────────────────────────────────── */
+function populateCarDropdown(){
+  const sel=document.getElementById('carSelect');
+  const prev=sel.value;
+  sel.innerHTML='<option value="all">🚗 All vehicles</option>';
 
-function updateStats(){
-  const v=filtered();
-  document.getElementById('stTrips').textContent=v.length;
-  document.getElementById('stVeh').textContent=new Set(v.map(b=>b.car_id)).size;
-  document.getElementById('stDrv').textContent=new Set(v.filter(b=>b.driver_name).map(b=>b.driver_name)).size;
+  // group by type
+  const typeMap=new Map();
+  allCars.forEach(c=>{
+    if(!typeMap.has(c.type_id)) typeMap.set(c.type_id,{name:c.type_name,icon:c.type_icon||'',cars:[]});
+    typeMap.get(c.type_id).cars.push(c);
+  });
+  typeMap.forEach(type=>{
+    const grp=document.createElement('optgroup');
+    grp.label=`${type.icon} ${type.name}`;
+    type.cars.forEach(c=>{
+      const opt=document.createElement('option');
+      opt.value=c.id; opt.textContent=`${c.name}${c.seats?' ('+c.seats+' seats)':''}`;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+
+  // restore previous selection if still valid
+  if(prev && [...sel.options].some(o=>o.value==prev)) sel.value=prev;
+  carFilter=sel.value==='all'?'all':parseInt(sel.value);
+}
+
+function applyCarFilter(){
+  const v=document.getElementById('carSelect').value;
+  carFilter=v==='all'?'all':parseInt(v);
+  updateStats(); render();
+}
+
+/* ── Filter ─────────────────────────────────────────────────────── */
+function getFiltered(){
+  return allBks.filter(b=>{
+    if(filterS!=='all' && b.status!==filterS) return false;
+    if(carFilter!=='all' && b.car_id!==carFilter) return false;
+    return true;
+  });
+}
+function getDisplayCars(){
+  if(carFilter==='all') return allCars;
+  return allCars.filter(c=>c.id===carFilter);
 }
 
 function setFilter(s){
@@ -271,59 +384,160 @@ function setFilter(s){
   document.querySelectorAll('.fbtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.s===s));
   updateStats(); render();
 }
-function applySearch(){ searchQ=document.getElementById('searchBox').value; updateStats(); render(); }
 
+function updateStats(){
+  const v=getFiltered();
+  document.getElementById('stTrips').textContent=v.length;
+  document.getElementById('stVeh').textContent=new Set(v.map(b=>b.car_id)).size;
+  document.getElementById('stDrv').textContent=new Set(v.filter(b=>b.driver_name).map(b=>b.driver_name)).size;
+}
+
+/* ── Render timeline ────────────────────────────────────────────── */
 function render(days){
   if(!days) days=getDays();
-  const todayStr=toYMD(new Date());
-  const bks=filtered();
-  if(!allCars.length){ document.getElementById('gridWrap').innerHTML='<div class="sch-empty">ไม่พบข้อมูลรถ</div>'; return; }
+  const todayStr = toYMD(new Date());
+  const nowH     = new Date().getHours() + new Date().getMinutes()/60;
+  const bks      = getFiltered();
+  const cars     = getDisplayCars();
 
+  if(!allCars.length){
+    document.getElementById('tlOuter').innerHTML='<div class="sch-empty">ไม่พบข้อมูลรถ</div>';
+    return;
+  }
+
+  // group cars by type
   const typeMap=new Map();
-  allCars.forEach(c=>{
-    if(!typeMap.has(c.type_id)) typeMap.set(c.type_id,{id:c.type_id,name:c.type_name,icon:c.type_icon,cars:[]});
+  cars.forEach(c=>{
+    if(!typeMap.has(c.type_id)) typeMap.set(c.type_id,{id:c.type_id,name:c.type_name,icon:c.type_icon||'',cars:[]});
     typeMap.get(c.type_id).cars.push(c);
   });
 
-  let h='<div class="rgrid">';
-  // header
-  h+='<div class="rg-head"><div class="rg-h0">รถ</div>';
-  days.forEach(d=>{
-    const isT=toYMD(d)===todayStr;
-    h+=`<div class="rg-hd${isT?' today':''}"><div class="hd-dow">${DOW[d.getDay()]}</div><div class="hd-num">${d.getDate()}</div><div class="hd-mon">${MONS[d.getMonth()]}</div></div>`;
-  });
-  h+='</div>';
+  // Build grid: one row per day × each car row = timeline of hours
+  // Layout: rows = (type-header + cars), cols = car-label + 7-days × N_HOURS
+  // Actually: car-label 160px | day1-h06 | day1-h07 | ... | day1-h21 | day2-h06 | ...
+  // That becomes 160 + 7*16 = 113 columns — too many.
+  // Better approach: show ONE day at a time on the timeline, keep week selector for context.
+  // Show a day-picker row, render ONE selected day as timeline (car × hours).
 
+  const selDay = baseDate;
+  const selStr = toYMD(selDay);
+
+  // ── WEEK MINI-HEADER (dot indicator per day) ──
+  let weekBar = '<div style="display:flex;gap:.2rem;padding:.4rem 1.5rem;align-items:center;border-bottom:1px solid var(--border);overflow-x:auto">';
+  days.forEach(d=>{
+    const ds=toYMD(d);
+    const cnt=bks.filter(b=>b.start_date<=ds&&b.end_date>=ds).length;
+    const isT=ds===todayStr;
+    const isSel=ds===selStr;
+    weekBar+=`<div onclick="selectDay('${ds}')" style="
+      display:flex;flex-direction:column;align-items:center;
+      padding:.3rem .5rem;border-radius:8px;cursor:pointer;min-width:48px;
+      background:${isSel?'var(--accent)':'transparent'};
+      border:1px solid ${isSel?'var(--accent)':isT?'rgba(232,240,74,.4)':'var(--border)'};
+      transition:all .15s;
+    ">
+      <div style="font-size:.58rem;color:${isSel?'#000':isT?'var(--accent)':'var(--muted)'};text-transform:uppercase;letter-spacing:.06em">${DOW[d.getDay()]}</div>
+      <div style="font-size:1rem;font-weight:700;color:${isSel?'#000':isT?'var(--accent)':'var(--text)'};">${d.getDate()}</div>
+      <div style="font-size:.58rem;color:${isSel?'#000':'var(--muted2)'}">${MONS[d.getMonth()]}</div>
+      ${cnt>0?`<div style="width:5px;height:5px;border-radius:50%;background:${isSel?'#000':'var(--accent)'};margin-top:3px;"></div>`:'<div style="width:5px;height:5px;margin-top:3px;"></div>'}
+    </div>`;
+  });
+  weekBar += '</div>';
+
+  // ── TIMELINE GRID ──
+  // Columns: 160px (car label) + N_HOURS columns (one per hour)
+  const colTemplate = `160px repeat(${N_HOURS}, minmax(58px,1fr))`;
+
+  let grid = `<div class="tl-grid" style="grid-template-columns:${colTemplate}">`;
+
+  // Header row: car label cell + hour cells
+  grid += `<div class="tl-h0" style="grid-column:1;position:sticky;top:0;z-index:5">
+    ${DOW[selDay.getDay()]} ${selDay.getDate()} ${MONS[selDay.getMonth()]}
+  </div>`;
+  for(let h=HOUR_START; h<HOUR_END; h++){
+    const isNow = selStr===todayStr && Math.floor(nowH)===h;
+    grid+=`<div class="tl-hh${isNow?' now-col':''}" style="position:sticky;top:0;z-index:5">${String(h).padStart(2,'0')}:00</div>`;
+  }
+
+  // For each type → type separator → each car row
   typeMap.forEach(type=>{
-    h+=`<div class="rg-type"><div class="rg-type-lbl">${type.icon||''} ${type.name}</div><div></div></div>`;
+    // Type separator spans all columns
+    grid+=`<div class="tl-type-row" style="grid-column:1/-1">${type.icon} ${type.name}</div>`;
+
     type.cars.forEach(car=>{
-      h+='<div class="rg-row">';
-      h+=`<div class="rg-car"><div class="rg-car-name">${car.name}</div><div class="rg-car-meta">${car.seats?car.seats+' seats':''}</div></div>`;
-      days.forEach(d=>{
-        const ds=toYMD(d);
-        const isT=ds===todayStr, isW=d.getDay()===0||d.getDay()===6;
-        const cb=bks.filter(b=>b.car_id===car.id&&b.start_date<=ds&&b.end_date>=ds);
-        h+=`<div class="rg-cell${isT?' today-col':''}${isW?' wknd':''}">`;
-        cb.forEach(b=>{
-          const time=b.start_time&&b.end_time?`${b.start_time}–${b.end_time}`:'';
+      // Car label
+      grid+=`<div class="tl-car-lbl">
+        <div class="tl-car-name">${car.name}</div>
+        <div class="tl-car-meta">${car.seats?car.seats+' seats':''}</div>
+      </div>`;
+
+      // Get bookings for this car on selected day
+      const carBks = bks.filter(b=>b.car_id===car.id && b.start_date<=selStr && b.end_date>=selStr);
+
+      // Render N_HOURS cells, with booking blocks overlaid
+      for(let h=HOUR_START; h<HOUR_END; h++){
+        const isNow = selStr===todayStr && Math.floor(nowH)===h;
+
+        // Find bookings that START in this hour
+        const startHere = carBks.filter(b=>{
+          const bh = parseTime(b.start_time);
+          return bh!==null && Math.floor(bh)===h;
+        });
+
+        grid += `<div class="tl-cell${isNow?' now-col':''}">`;
+
+        // Current time indicator
+        if(isNow && selStr===todayStr){
+          const pct = ((nowH - h) * 100).toFixed(1);
+          grid+=`<div class="now-line" style="left:${pct}%"><div class="now-dot"></div></div>`;
+        }
+
+        startHere.forEach(b=>{
+          const startH = parseTime(b.start_time);
+          const endH   = parseTime(b.end_time);
+          const eff_end = (endH!==null && endH>startH) ? endH : startH+1;
+          const clampEnd = Math.min(eff_end, HOUR_END);
+          const spanHours = clampEnd - startH;
+
+          // position within this cell (0–100%) and width in column-widths
+          const leftPct  = ((startH - h) * 100).toFixed(1);
+          // width = spanHours columns, expressed as calc
+          const widthStr = spanHours===1
+            ? `calc(100% - ${leftPct}% - 4px)`
+            : `calc(${spanHours * 100}% + ${(spanHours-1)}px - ${leftPct}% * ${spanHours} - 4px)`;
+
           const su=(b.user_name||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const sd=(b.driver_name||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const sl=(b.pickup_location||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const sc=car.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-          h+=`<div class="bk bk-${b.status}" onmouseenter="showTip(event,'${sc}','${time}','${su}','${sd}','${sl}','${b.status}')" onmouseleave="hideTip()">
+          const st=b.start_time&&b.end_time?`${b.start_time}–${b.end_time}`:(b.start_time||'');
+
+          grid+=`<div class="bk-block bk-${b.status}"
+            style="left:calc(${leftPct}% + 2px);width:${widthStr}"
+            onmouseenter="showTip(event,'${sc}','${st}','${su}','${sd}','${sl}','${b.status}')"
+            onmouseleave="hideTip()">
             <div class="bk-name">${b.user_name||'—'}</div>
-            <div class="bk-sub">${time}${b.driver_name?' · '+b.driver_name:''}</div>
+            <div class="bk-sub">${st}${b.driver_name?' · '+b.driver_name:''}</div>
           </div>`;
         });
-        h+='</div>';
-      });
-      h+='</div>';
+
+        grid += '</div>';
+      }
     });
   });
-  h+='</div>';
-  document.getElementById('gridWrap').innerHTML=h;
+
+  grid += '</div>';
+
+  document.getElementById('tlOuter').innerHTML = weekBar + `<div style="overflow-x:auto">${grid}</div>`;
 }
 
+function selectDay(ymd){
+  const [y,m,d]=ymd.split('-').map(Number);
+  baseDate=new Date(y,m-1,d);
+  render();
+}
+
+/* ── Tooltip ────────────────────────────────────────────────────── */
 function showTip(e,car,time,user,driver,loc,status){
   const t=document.getElementById('tip');
   t.innerHTML=`<div class="tip-car">${car}</div>
@@ -338,6 +552,7 @@ function moveTip(e){ const t=document.getElementById('tip'); t.style.left=Math.m
 function hideTip(){ document.getElementById('tip').style.display='none'; }
 document.addEventListener('mousemove',e=>{ const t=document.getElementById('tip'); if(t.style.display!=='none') moveTip(e); });
 
+/* ── Auth ───────────────────────────────────────────────────────── */
 async function doLogin(){
   const d=await api.login(document.getElementById('loginEmail').value,document.getElementById('loginPassword').value);
   if(d.success){closeModal('loginModal');location.reload();}
