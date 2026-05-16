@@ -239,10 +239,10 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
        AND status IN ('pending', 'confirmed')
        AND NOT (
          -- No overlap if existing booking ends before or at new booking start
-         (end_date::timestamp + COALESCE(end_time, '09:00'::time)) <= ($3::date::timestamp + $5::time)
+         (end_date + COALESCE(end_time, '09:00'::time)) <= ($3::date + $5::time)
          OR
          -- No overlap if new booking ends before or at existing booking start
-         ($2::date::timestamp + $4::time) <= (start_date::timestamp + COALESCE(start_time, '09:00'::time))
+         ($2::date + $4::time) <= (start_date + COALESCE(start_time, '09:00'::time))
        )
        LIMIT 1`,
       [carId, endDate, startDate, endTime, startTime]
