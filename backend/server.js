@@ -52,7 +52,7 @@ app.post('/api/register', async (req, res) => {
     );
     req.session.user = user;
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.post('/api/login', async (req, res) => {
@@ -64,7 +64,7 @@ app.post('/api/login', async (req, res) => {
       return res.json({ success: false, message: 'รหัสผ่านไม่ถูกต้อง' });
     req.session.user = { id: user.id, name: user.name, email: user.email, role: user.role };
     res.json({ success: true, role: user.role });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
@@ -75,7 +75,7 @@ app.get('/api/me', (req, res) =>
 app.get('/api/cartypes', async (_req, res) => {
   try {
     res.json(await query('SELECT * FROM car_types ORDER BY id'));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 app.post('/api/cartypes', requireAdmin, async (req, res) => {
@@ -87,7 +87,7 @@ app.post('/api/cartypes', requireAdmin, async (req, res) => {
       [name, icon || '🚗', description || '']
     );
     res.json({ success: true, id: row.id });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.put('/api/cartypes/:id', requireAdmin, async (req, res) => {
@@ -98,7 +98,7 @@ app.put('/api/cartypes/:id', requireAdmin, async (req, res) => {
       [name, icon, description, req.params.id]
     );
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.delete('/api/cartypes/:id', requireAdmin, async (req, res) => {
@@ -107,14 +107,14 @@ app.delete('/api/cartypes/:id', requireAdmin, async (req, res) => {
     if (used) return res.json({ success: false, message: 'มีรถที่ใช้ประเภทนี้อยู่ ลบไม่ได้' });
     await query('DELETE FROM car_types WHERE id=$1', [req.params.id]);
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 // ── DRIVERS ────────────────────────────────────────────────────────────────
 app.get('/api/drivers', async (_req, res) => {
   try {
     res.json(await query('SELECT * FROM drivers ORDER BY id'));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 app.post('/api/drivers', requireAdmin, async (req, res) => {
@@ -126,7 +126,7 @@ app.post('/api/drivers', requireAdmin, async (req, res) => {
       [name, phone, license || '', note || '']
     );
     res.json({ success: true, id: row.id });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.put('/api/drivers/:id', requireAdmin, async (req, res) => {
@@ -137,14 +137,14 @@ app.put('/api/drivers/:id', requireAdmin, async (req, res) => {
       [name, phone, license, available, note, req.params.id]
     );
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.delete('/api/drivers/:id', requireAdmin, async (req, res) => {
   try {
     await query('DELETE FROM drivers WHERE id=$1', [req.params.id]);
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 // ── CARS ───────────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ app.get('/api/cars', async (req, res) => {
       ${typeId ? 'WHERE c.car_type_id = $1' : ''}
       ORDER BY c.id`;
     res.json(await query(sql, typeId ? [typeId] : []));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 app.get('/api/cars/:id', async (req, res) => {
@@ -173,7 +173,7 @@ app.get('/api/cars/:id', async (req, res) => {
     );
     if (!car) return res.status(404).json({ message: 'ไม่พบรถ' });
     res.json(car);
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 app.post('/api/cars', requireAdmin, async (req, res) => {
@@ -186,7 +186,7 @@ app.post('/api/cars', requireAdmin, async (req, res) => {
       [name, carTypeId, seats || 4, description || '']
     );
     res.json({ success: true, id: row.id });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.put('/api/cars/:id', requireAdmin, async (req, res) => {
@@ -197,14 +197,14 @@ app.put('/api/cars/:id', requireAdmin, async (req, res) => {
       [name, carTypeId, seats, available, description, req.params.id]
     );
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.delete('/api/cars/:id', requireAdmin, async (req, res) => {
   try {
     await query('DELETE FROM cars WHERE id=$1', [req.params.id]);
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 // ── BOOKINGS ───────────────────────────────────────────────────────────────
@@ -272,7 +272,7 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
       ]
     );
     res.json({ success: true, booking });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.get('/api/bookings/my', requireAuth, async (req, res) => {
@@ -281,7 +281,7 @@ app.get('/api/bookings/my', requireAuth, async (req, res) => {
       'SELECT * FROM bookings WHERE user_id=$1 ORDER BY created_at DESC',
       [req.session.user.id]
     ));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 app.get('/api/bookings/car/:carId', async (req, res) => {
@@ -295,14 +295,14 @@ app.get('/api/bookings/car/:carId', async (req, res) => {
     }
     sql += ' ORDER BY start_date';
     res.json(await query(sql, params));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 // ── ADMIN ──────────────────────────────────────────────────────────────────
 app.get('/api/admin/bookings', requireAdmin, async (_req, res) => {
   try {
     res.json(await query('SELECT * FROM bookings ORDER BY created_at DESC'));
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 app.put('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
@@ -318,14 +318,14 @@ app.put('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
       [...Object.values(req.body), req.params.id]
     );
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.delete('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
   try {
     await query('DELETE FROM bookings WHERE id=$1', [req.params.id]);
     res.json({ success: true });
-  } catch (e) { res.json({ success: false, message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
 app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
@@ -347,7 +347,7 @@ app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
       totalDrivers:  drivers.cnt,
       totalCarTypes: types.cnt,
     });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+  } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────
