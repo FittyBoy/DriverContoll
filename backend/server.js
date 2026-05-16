@@ -813,10 +813,13 @@ app.get('/api/admin/stats'
 });
 
 // ── Swagger UI ────────────────────────────────────────────────────────────────
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'AGC Microglass API Docs',
-  swaggerOptions: { persistAuthorization: true },
-}));
+app.use('/api-docs',
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'AGC Microglass API Docs',
+    swaggerOptions: { persistAuthorization: true },
+  }),
+  swaggerUi.serve
+);
 app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec));
 
 // ── Start ──────────────────────────────────────────────────────────────────
