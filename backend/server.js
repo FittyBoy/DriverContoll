@@ -1,6 +1,8 @@
 require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
+const express        = require('express');
+const swaggerUi      = require('swagger-ui-express');
+const swaggerSpec    = require('./swagger');
+const session        = require('express-session');
 const bcrypt  = require('bcryptjs');
 const cors    = require('cors');
 const { query, queryOne } = require('./db');
@@ -35,7 +37,34 @@ const requireAdmin = (req, res, next) => {
 };
 
 // ── AUTH ───────────────────────────────────────────────────────────────────
-app.post('/api/register', async (req, res) => {
+
+/**
+ * @swagger
+ * /api/register:
+ *   post:
+ *     tags: [Auth]
+ *     summary: สมัครสมาชิกใหม่
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, password]
+ *             properties:
+ *               name:     { type: string, example: สมหมาย ใจดี }
+ *               email:    { type: string, example: sommai@agc.com }
+ *               password: { type: string, example: "123456" }
+ *               phone:    { type: string, example: 081-000-0000 }
+ *     responses:
+ *       200:
+ *         description: สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Success' }
+ */
+app.post('/api/register'
+, async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
     if (!name || !email || !password)
@@ -55,7 +84,36 @@ app.post('/api/register', async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.post('/api/login', async (req, res) => {
+
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: เข้าสู่ระบบ
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:    { type: string, example: admin@carbook.com }
+ *               password: { type: string, example: admin123 }
+ *     responses:
+ *       200:
+ *         description: เข้าสู่ระบบสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 role:    { type: string,  example: admin }
+ */
+app.post('/api/login'
+, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await queryOne('SELECT * FROM users WHERE email=$1', [email]);
@@ -67,18 +125,92 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
-app.get('/api/me', (req, res) =>
+
+/**
+ * @swagger
+ * /api/logout:
+ *   post:
+ *     tags: [Auth]
+ *     summary: ออกจากระบบ
+ *     responses:
+ *       200:
+ *         description: สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Success' }
+ */
+app.post('/api/logout'
+, (req, res) => { req.session.destroy(); res.json({ success: true }); });
+
+/**
+ * @swagger
+ * /api/me:
+ *   get:
+ *     tags: [Auth]
+ *     summary: ดูข้อมูลผู้ใช้ที่ login อยู่
+ *     responses:
+ *       200:
+ *         description: สถานะ login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 loggedIn: { type: boolean }
+ *                 user:     { type: object }
+ */
+app.get('/api/me'
+, (req, res) =>
   res.json(req.session.user ? { loggedIn: true, user: req.session.user } : { loggedIn: false }));
 
 // ── CAR TYPES ──────────────────────────────────────────────────────────────
-app.get('/api/cartypes', async (_req, res) => {
+
+/**
+ * @swagger
+ * /api/cartypes:
+ *   get:
+ *     tags: [Car Types]
+ *     summary: ดูประเภทรถทั้งหมด
+ *     responses:
+ *       200:
+ *         description: รายการประเภทรถ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/CarType' }
+ */
+app.get('/api/cartypes'
+, async (_req, res) => {
   try {
     res.json(await query('SELECT * FROM car_types ORDER BY id'));
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
-app.post('/api/cartypes', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/cartypes:
+ *   post:
+ *     tags: [Car Types]
+ *     summary: เพิ่มประเภทรถใหม่ (Admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:        { type: string, example: SUV }
+ *               icon:        { type: string, example: 🚙 }
+ *               description: { type: string, example: รถอเนกประสงค์ }
+ *     responses:
+ *       200:
+ *         description: เพิ่มสำเร็จ
+ */
+app.post('/api/cartypes'
+, requireAdmin, async (req, res) => {
   try {
     const { name, icon, description } = req.body;
     if (!name) return res.json({ success: false, message: 'กรุณาระบุชื่อประเภท' });
@@ -90,7 +222,33 @@ app.post('/api/cartypes', requireAdmin, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.put('/api/cartypes/:id', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/cartypes/{id}:
+ *   put:
+ *     tags: [Car Types]
+ *     summary: แก้ไขประเภทรถ (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:        { type: string }
+ *               icon:        { type: string }
+ *               description: { type: string }
+ *     responses:
+ *       200:
+ *         description: แก้ไขสำเร็จ
+ */
+app.put('/api/cartypes/:id'
+, requireAdmin, async (req, res) => {
   try {
     const { name, icon, description } = req.body;
     await query(
@@ -101,7 +259,24 @@ app.put('/api/cartypes/:id', requireAdmin, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.delete('/api/cartypes/:id', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/cartypes/{id}:
+ *   delete:
+ *     tags: [Car Types]
+ *     summary: ลบประเภทรถ (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: ลบสำเร็จ
+ */
+app.delete('/api/cartypes/:id'
+, requireAdmin, async (req, res) => {
   try {
     const used = await queryOne('SELECT id FROM cars WHERE car_type_id=$1 LIMIT 1', [req.params.id]);
     if (used) return res.json({ success: false, message: 'มีรถที่ใช้ประเภทนี้อยู่ ลบไม่ได้' });
@@ -111,13 +286,54 @@ app.delete('/api/cartypes/:id', requireAdmin, async (req, res) => {
 });
 
 // ── DRIVERS ────────────────────────────────────────────────────────────────
-app.get('/api/drivers', async (_req, res) => {
+
+/**
+ * @swagger
+ * /api/drivers:
+ *   get:
+ *     tags: [Drivers]
+ *     summary: ดูคนขับทั้งหมด
+ *     responses:
+ *       200:
+ *         description: รายการคนขับ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/Driver' }
+ */
+app.get('/api/drivers'
+, async (_req, res) => {
   try {
     res.json(await query('SELECT * FROM drivers ORDER BY id'));
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
-app.post('/api/drivers', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/drivers:
+ *   post:
+ *     tags: [Drivers]
+ *     summary: เพิ่มคนขับใหม่ (Admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, phone]
+ *             properties:
+ *               name:    { type: string, example: สมชาย มีสุข }
+ *               phone:   { type: string, example: 081-111-1111 }
+ *               license: { type: string, example: A1234567 }
+ *               note:    { type: string, example: ชำนาญเส้นทาง }
+ *     responses:
+ *       200:
+ *         description: เพิ่มสำเร็จ
+ */
+app.post('/api/drivers'
+, requireAdmin, async (req, res) => {
   try {
     const { name, phone, license, note } = req.body;
     if (!name || !phone) return res.json({ success: false, message: 'กรุณาระบุชื่อและเบอร์โทร' });
@@ -129,7 +345,35 @@ app.post('/api/drivers', requireAdmin, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.put('/api/drivers/:id', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/drivers/{id}:
+ *   put:
+ *     tags: [Drivers]
+ *     summary: แก้ไขข้อมูลคนขับ (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:      { type: string }
+ *               phone:     { type: string }
+ *               license:   { type: string }
+ *               available: { type: boolean }
+ *               note:      { type: string }
+ *     responses:
+ *       200:
+ *         description: แก้ไขสำเร็จ
+ */
+app.put('/api/drivers/:id'
+, requireAdmin, async (req, res) => {
   try {
     const { name, phone, license, available, note } = req.body;
     await query(
@@ -140,7 +384,24 @@ app.put('/api/drivers/:id', requireAdmin, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.delete('/api/drivers/:id', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/drivers/{id}:
+ *   delete:
+ *     tags: [Drivers]
+ *     summary: ลบคนขับ (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: ลบสำเร็จ
+ */
+app.delete('/api/drivers/:id'
+, requireAdmin, async (req, res) => {
   try {
     await query('DELETE FROM drivers WHERE id=$1', [req.params.id]);
     res.json({ success: true });
@@ -148,7 +409,29 @@ app.delete('/api/drivers/:id', requireAdmin, async (req, res) => {
 });
 
 // ── CARS ───────────────────────────────────────────────────────────────────
-app.get('/api/cars', async (req, res) => {
+
+/**
+ * @swagger
+ * /api/cars:
+ *   get:
+ *     tags: [Cars]
+ *     summary: ดูรถทั้งหมด
+ *     parameters:
+ *       - in: query
+ *         name: typeId
+ *         schema: { type: integer }
+ *         description: กรองตาม carTypeId
+ *     responses:
+ *       200:
+ *         description: รายการรถ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/Car' }
+ */
+app.get('/api/cars'
+, async (req, res) => {
   try {
     const { typeId } = req.query;
     const sql = `
@@ -176,7 +459,31 @@ app.get('/api/cars/:id', async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
-app.post('/api/cars', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/cars:
+ *   post:
+ *     tags: [Cars]
+ *     summary: เพิ่มรถใหม่ (Admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, carTypeId]
+ *             properties:
+ *               name:        { type: string,  example: Toyota Camry }
+ *               carTypeId:   { type: integer, example: 1 }
+ *               seats:       { type: integer, example: 5 }
+ *               description: { type: string,  example: รถเก๋งหรู }
+ *     responses:
+ *       200:
+ *         description: เพิ่มสำเร็จ
+ */
+app.post('/api/cars'
+, requireAdmin, async (req, res) => {
   try {
     const { name, carTypeId, seats, description } = req.body;
     if (!name || !carTypeId) return res.json({ success: false, message: 'กรุณาระบุข้อมูลให้ครบ' });
@@ -208,7 +515,41 @@ app.delete('/api/cars/:id', requireAdmin, async (req, res) => {
 });
 
 // ── BOOKINGS ───────────────────────────────────────────────────────────────
-app.post('/api/bookings', requireAuth, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/bookings:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: สร้างการจองใหม่ (ต้อง login)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [carId, driverId, startDate, endDate, pickupLocation]
+ *             properties:
+ *               carId:           { type: integer, example: 1 }
+ *               driverId:        { type: integer, example: 1 }
+ *               startDate:       { type: string, format: date, example: "2024-07-01" }
+ *               endDate:         { type: string, format: date, example: "2024-07-03" }
+ *               pickupLocation:  { type: string, example: โรงงาน MG }
+ *               dropoffLocation: { type: string, example: สนามบิน BKK }
+ *               notes:           { type: string, example: รับแขก VIP }
+ *     responses:
+ *       200:
+ *         description: จองสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 booking: { $ref: '#/components/schemas/Booking' }
+ */
+app.post('/api/bookings'
+, requireAuth, async (req, res) => {
   try {
     const { carId, driverId, startDate, startTime, endDate, endTime, pickupLocation, dropoffLocation, notes } = req.body;
     if (!carId || !startDate || !startTime || !endDate || !endTime || !pickupLocation)
@@ -275,7 +616,24 @@ app.post('/api/bookings', requireAuth, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.get('/api/bookings/my', requireAuth, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/bookings/my:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: ดูการจองของตัวเอง (ต้อง login)
+ *     responses:
+ *       200:
+ *         description: รายการการจอง
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/Booking' }
+ */
+app.get('/api/bookings/my'
+, requireAuth, async (req, res) => {
   try {
     res.json(await query(
       'SELECT * FROM bookings WHERE user_id=$1 ORDER BY created_at DESC',
@@ -284,7 +642,28 @@ app.get('/api/bookings/my', requireAuth, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
-app.get('/api/bookings/car/:carId', async (req, res) => {
+
+/**
+ * @swagger
+ * /api/bookings/car/{carId}:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: ดูการจองของรถ (สำหรับตารางสัปดาห์)
+ *     parameters:
+ *       - in: path
+ *         name: carId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: weekStart
+ *         schema: { type: string, format: date }
+ *         description: วันจันทร์ของสัปดาห์ที่ต้องการ (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: รายการการจองในสัปดาห์
+ */
+app.get('/api/bookings/car/:carId'
+, async (req, res) => {
   try {
     const { weekStart } = req.query;
     let sql = 'SELECT * FROM bookings WHERE car_id=$1';
@@ -299,13 +678,54 @@ app.get('/api/bookings/car/:carId', async (req, res) => {
 });
 
 // ── ADMIN ──────────────────────────────────────────────────────────────────
-app.get('/api/admin/bookings', requireAdmin, async (_req, res) => {
+
+/**
+ * @swagger
+ * /api/admin/bookings:
+ *   get:
+ *     tags: [Admin]
+ *     summary: ดูการจองทั้งหมด (Admin)
+ *     responses:
+ *       200:
+ *         description: รายการการจองทั้งหมด
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/Booking' }
+ */
+app.get('/api/admin/bookings'
+, requireAdmin, async (_req, res) => {
   try {
     res.json(await query('SELECT * FROM bookings ORDER BY created_at DESC'));
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
-app.put('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/admin/bookings/{id}:
+ *   put:
+ *     tags: [Admin]
+ *     summary: อัปเดตสถานะการจอง (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status: { type: string, enum: [pending, confirmed, cancelled, completed] }
+ *     responses:
+ *       200:
+ *         description: อัปเดตสำเร็จ
+ */
+app.put('/api/admin/bookings/:id'
+, requireAdmin, async (req, res) => {
   try {
     const fields = Object.keys(req.body)
       .map((k, i) => {
@@ -321,14 +741,56 @@ app.put('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.delete('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
+
+/**
+ * @swagger
+ * /api/admin/bookings/{id}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: ลบการจอง (Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: ลบสำเร็จ
+ */
+app.delete('/api/admin/bookings/:id'
+, requireAdmin, async (req, res) => {
   try {
     await query('DELETE FROM bookings WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.json({ success: false, message: e.message }); }
 });
 
-app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
+
+/**
+ * @swagger
+ * /api/admin/stats:
+ *   get:
+ *     tags: [Admin]
+ *     summary: ดูสถิติภาพรวม (Admin)
+ *     responses:
+ *       200:
+ *         description: สถิติ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalBookings: { type: integer }
+ *                 pending:       { type: integer }
+ *                 confirmed:     { type: integer }
+ *                 cancelled:     { type: integer }
+ *                 completed:     { type: integer }
+ *                 totalCars:     { type: integer }
+ *                 totalDrivers:  { type: integer }
+ *                 totalCarTypes: { type: integer }
+ */
+app.get('/api/admin/stats'
+, requireAdmin, async (_req, res) => {
   try {
     const [bk, cars, drivers, types] = await Promise.all([
       query(`SELECT status, COUNT(*)::int AS cnt FROM bookings GROUP BY status`),
@@ -350,9 +812,17 @@ app.get('/api/admin/stats', requireAdmin, async (_req, res) => {
   } catch (e) { console.error("❌", req.method, req.path, e.message); res.status(500).json({ message: e.message }); }
 });
 
+// ── Swagger UI ────────────────────────────────────────────────────────────────
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'AGC Microglass API Docs',
+  swaggerOptions: { persistAuthorization: true },
+}));
+app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec));
+
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚗 AGC Microglass API  →  http://localhost:${PORT}`);
   console.log(`   Frontend origin     →  ${FRONTEND_URL}`);
   console.log(`   Database schema     →  mass`);
+  console.log(`   Swagger UI          →  http://localhost:${PORT}/api-docs`);
 });
