@@ -6,7 +6,7 @@
   <title>ตารางรถ — AGC Microglass</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .sch-page { padding: 5.5rem 0 3rem; min-height: 100vh; }
+    .sch-page { padding:5.5rem 0 3rem; min-height:100vh; }
 
     /* ── topbar ── */
     .sch-topbar {
@@ -22,6 +22,17 @@
     .stat-badge .num { color:var(--accent); font-size:.92rem; }
     .sep { flex:1; }
 
+    /* Book Now button */
+    .btn-book-now {
+      display:flex; align-items:center; gap:.4rem;
+      background:var(--accent); color:#000; border:none;
+      border-radius:8px; padding:.38rem 1rem; font-size:.8rem;
+      font-weight:700; cursor:pointer; transition:all .15s;
+      letter-spacing:.02em; white-space:nowrap;
+    }
+    .btn-book-now:hover { background:#d4db2f; transform:translateY(-1px); box-shadow:0 4px 14px rgba(232,240,74,.3); }
+    .btn-book-now .plus { font-size:1rem; font-weight:400; line-height:1; }
+
     /* car dropdown */
     .car-select-wrap { position:relative; }
     .car-select-wrap select {
@@ -34,8 +45,7 @@
     .car-select-wrap select:focus { border-color:var(--accent); }
     .car-select-wrap::after {
       content:'▾'; position:absolute; right:.6rem; top:50%;
-      transform:translateY(-50%); pointer-events:none;
-      font-size:.65rem; color:var(--muted);
+      transform:translateY(-50%); pointer-events:none; font-size:.65rem; color:var(--muted);
     }
 
     /* ── nav bar ── */
@@ -58,51 +68,34 @@
     }
     .fbtn.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
 
-    /* ── timeline container ── */
+    /* ── timeline ── */
     .tl-outer { overflow-x:auto; }
-
     .tl-grid {
       display:grid;
-      /* col 0 = car label 160px, then 1 col per hour (06–22 = 16 cols) */
-      grid-template-columns: 160px repeat(16, minmax(64px, 1fr));
+      grid-template-columns: 160px repeat(16, minmax(58px,1fr));
       min-width:860px;
-      border-left:1px solid var(--border);
-      border-right:1px solid var(--border);
-    }
-
-    /* sticky hour header */
-    .tl-head {
-      display:contents;
-      position:sticky; top:calc(56px+44px+41px); z-index:18;
+      border-left:1px solid var(--border); border-right:1px solid var(--border);
     }
     .tl-h0 {
-      grid-column:1; background:var(--surface2);
-      border-bottom:2px solid var(--border); border-right:1px solid var(--border);
-      padding:.45rem .7rem; font-size:.64rem; color:var(--muted);
-      text-transform:uppercase; letter-spacing:.06em; position:sticky; top:calc(56px+44px+41px);
+      background:var(--surface2); border-bottom:2px solid var(--border);
+      border-right:1px solid var(--border); padding:.45rem .7rem;
+      font-size:.64rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
     }
     .tl-hh {
       background:var(--surface2); border-bottom:2px solid var(--border);
-      border-right:1px solid var(--border); text-align:center;
-      padding:.4rem .2rem; font-size:.68rem; color:var(--muted);
-      letter-spacing:.04em; position:sticky; top:calc(56px+44px+41px);
+      border-right:1px solid var(--border); text-align:center; padding:.4rem .2rem;
+      font-size:.68rem; color:var(--muted); letter-spacing:.04em;
     }
     .tl-hh:last-child { border-right:none; }
     .tl-hh.now-col { color:var(--accent); border-bottom-color:var(--accent); }
-
-    /* type separator row */
     .tl-type-row {
-      grid-column: 1 / -1;
-      padding:.28rem .75rem;
+      grid-column:1/-1; padding:.28rem .75rem;
       background:rgba(255,255,255,.022);
-      border-top:1px solid var(--border);
-      border-bottom:1px solid var(--border);
+      border-top:1px solid var(--border); border-bottom:1px solid var(--border);
       font-size:.68rem; font-weight:700; color:var(--muted);
       text-transform:uppercase; letter-spacing:.07em;
       display:flex; align-items:center; gap:.35rem;
     }
-
-    /* car row label */
     .tl-car-lbl {
       padding:.5rem .7rem; border-right:1px solid var(--border);
       border-bottom:1px solid var(--border);
@@ -110,46 +103,27 @@
     }
     .tl-car-name { font-size:.76rem; font-weight:600; color:var(--text); }
     .tl-car-meta { font-size:.63rem; color:var(--muted); margin-top:2px; }
-
-    /* hour cell */
     .tl-cell {
       position:relative; border-right:1px solid var(--border);
-      border-bottom:1px solid var(--border);
-      min-height:54px; overflow:visible;
+      border-bottom:1px solid var(--border); min-height:54px; overflow:visible;
     }
     .tl-cell:last-child { border-right:none; }
-    .tl-cell.now-col::before {
-      content:''; position:absolute; inset:0;
-      background:rgba(232,240,74,.04); pointer-events:none;
-    }
-    .tl-cell.wknd { background:rgba(255,255,255,.008); }
-
-    /* booking block inside a cell — can span multiple columns */
+    .tl-cell.now-col::before { content:''; position:absolute; inset:0; background:rgba(232,240,74,.04); pointer-events:none; }
     .bk-block {
       position:absolute; top:4px; bottom:4px;
-      border-radius:5px; padding:3px 6px;
-      font-size:.65rem; line-height:1.35; cursor:pointer;
-      transition:filter .12s, box-shadow .12s; border-left:3px solid transparent;
-      overflow:hidden; white-space:nowrap; z-index:2;
-      pointer-events:auto;
+      border-radius:5px; padding:3px 6px; font-size:.65rem; line-height:1.35;
+      cursor:pointer; transition:filter .12s, box-shadow .12s;
+      border-left:3px solid transparent; overflow:hidden; white-space:nowrap; z-index:2;
     }
     .bk-block:hover { filter:brightness(1.18); box-shadow:0 2px 10px rgba(0,0,0,.4); }
     .bk-name { font-weight:600; overflow:hidden; text-overflow:ellipsis; }
     .bk-sub  { opacity:.8; overflow:hidden; text-overflow:ellipsis; }
-    .bk-confirmed { background:rgba(56,138,221,.2); border-color:#378ADD; color:#85b7eb; }
+    .bk-confirmed { background:rgba(56,138,221,.2);  border-color:#378ADD; color:#85b7eb; }
     .bk-pending   { background:rgba(186,117,23,.25); border-color:#BA7517; color:#FAC775; }
     .bk-completed { background:rgba(76,175,138,.2);  border-color:#4caf8a; color:#9FE1CB; }
     .bk-cancelled { background:rgba(224,85,85,.15);  border-color:#e05555; color:#F09595; }
-
-    /* current time line */
-    .now-line {
-      position:absolute; top:0; bottom:0; width:2px;
-      background:var(--accent); z-index:10; pointer-events:none;
-    }
-    .now-dot {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:8px; height:8px; border-radius:50%; background:var(--accent);
-    }
+    .now-line { position:absolute; top:0; bottom:0; width:2px; background:var(--accent); z-index:10; pointer-events:none; }
+    .now-dot  { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:8px; height:8px; border-radius:50%; background:var(--accent); }
 
     /* legend */
     .sch-leg {
@@ -163,19 +137,137 @@
     /* tooltip */
     .tip {
       position:fixed; background:var(--surface); border:1px solid var(--border);
-      border-radius:10px; padding:.65rem .9rem; font-size:.76rem; z-index:999;
+      border-radius:10px; padding:.65rem .9rem; font-size:.76rem; z-index:9999;
       pointer-events:none; min-width:185px; display:none;
       box-shadow:0 8px 32px rgba(0,0,0,.45);
     }
-    .tip-car  { font-weight:700; font-size:.82rem; color:var(--text); margin-bottom:.3rem; }
-    .tip-row  { color:var(--muted); margin:2px 0; }
-    .tip-badge {
-      display:inline-block; padding:2px 8px; border-radius:100px;
-      font-size:.66rem; margin-top:.3rem;
-    }
+    .tip-car { font-weight:700; font-size:.82rem; color:var(--text); margin-bottom:.3rem; }
+    .tip-row { color:var(--muted); margin:2px 0; }
+    .tip-badge { display:inline-block; padding:2px 8px; border-radius:100px; font-size:.66rem; margin-top:.3rem; }
 
     .sch-loading { display:flex; justify-content:center; padding:4rem; }
     .sch-empty   { text-align:center; padding:4rem; color:var(--muted); font-size:.88rem; }
+
+    /* ═══════════════════════════════════════════════════
+       BOOKING MODAL XL
+    ═══════════════════════════════════════════════════ */
+    .modal-xl-overlay {
+      position:fixed; inset:0; z-index:500;
+      background:rgba(0,0,0,.65); backdrop-filter:blur(6px);
+      display:none; align-items:flex-start; justify-content:center;
+      padding:1.5rem 1rem; overflow-y:auto;
+    }
+    .modal-xl-overlay.open { display:flex; }
+
+    .modal-xl {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:16px; width:100%; max-width:820px;
+      margin:auto; /* center vertically when content < viewport */
+      animation:modalSlideIn .28s cubic-bezier(.34,1.56,.64,1) both;
+      flex-shrink:0;
+    }
+    @keyframes modalSlideIn {
+      from { opacity:0; transform:translateY(24px) scale(.97); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    .mxl-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1.25rem 1.5rem; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:var(--surface); z-index:2;
+      border-radius:16px 16px 0 0;
+    }
+    .mxl-title { font-size:1.1rem; font-weight:700; }
+    .mxl-close {
+      background:none; border:none; color:var(--muted); font-size:1.1rem;
+      width:30px; height:30px; border-radius:7px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; transition:all .15s;
+    }
+    .mxl-close:hover { background:var(--surface2); color:var(--text); }
+
+    .mxl-body {
+      padding:1.5rem;
+      display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;
+    }
+    @media(max-width:600px){ .mxl-body { grid-template-columns:1fr; } }
+
+    .mxl-section {
+      grid-column:1/-1;
+      border:1px solid var(--border); border-radius:10px; overflow:hidden;
+    }
+    .mxl-section-head {
+      background:var(--surface2); padding:.6rem 1rem;
+      font-size:.78rem; font-weight:700; color:var(--text);
+      border-bottom:1px solid var(--border); display:flex; align-items:center; gap:.4rem;
+    }
+    .mxl-section-body { padding:1rem; }
+
+    /* Car grid inside modal */
+    .car-grid-modal {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.6rem;
+    }
+    .car-opt {
+      border:2px solid var(--border); border-radius:9px; padding:.75rem .5rem;
+      cursor:pointer; transition:all .18s; background:var(--surface2); text-align:center;
+    }
+    .car-opt:hover  { border-color:rgba(232,240,74,.4); }
+    .car-opt.sel    { border-color:var(--accent); background:rgba(232,240,74,.07); }
+    .car-opt-icon   { font-size:1.6rem; }
+    .car-opt-name   { font-size:.75rem; font-weight:600; margin:.25rem 0 .1rem; }
+    .car-opt-type   { font-size:.68rem; color:var(--accent); }
+    .car-opt-seats  { font-size:.66rem; color:var(--muted); }
+
+    /* Driver grid inside modal */
+    .drv-grid-modal {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:.6rem;
+    }
+    .drv-opt {
+      border:2px solid var(--border); border-radius:9px; padding:.75rem;
+      cursor:pointer; transition:all .18s; background:var(--surface2);
+    }
+    .drv-opt:hover   { border-color:rgba(232,240,74,.4); }
+    .drv-opt.sel     { border-color:var(--accent); background:rgba(232,240,74,.07); }
+    .drv-opt.unavail { opacity:.4; cursor:not-allowed; }
+    .drv-opt-name { font-weight:600; font-size:.82rem; margin-bottom:.25rem; }
+    .drv-opt-meta { font-size:.7rem; color:var(--muted); line-height:1.6; }
+
+    .mxl-foot {
+      padding:1rem 1.5rem; border-top:1px solid var(--border);
+      display:flex; gap:.75rem; align-items:center;
+      position:sticky; bottom:0; background:var(--surface);
+      border-radius:0 0 16px 16px;
+    }
+    .mxl-alert { font-size:.78rem; color:var(--danger); flex:1; display:none; }
+    .mxl-alert.show { display:block; }
+    .btn-confirm {
+      background:var(--accent); color:#000; border:none; border-radius:8px;
+      padding:.6rem 2rem; font-size:.88rem; font-weight:700; cursor:pointer; transition:all .15s;
+      white-space:nowrap;
+    }
+    .btn-confirm:hover { background:#d4db2f; }
+    .btn-confirm:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* success state inside modal */
+    .success-body { padding:2rem 1.5rem; text-align:center; }
+    .success-icon { font-size:3.5rem; margin-bottom:.75rem; }
+    .success-title { font-size:1.3rem; font-weight:700; margin-bottom:.25rem; }
+    .success-ref { color:var(--muted); font-size:.82rem; margin-bottom:1.5rem; }
+    .success-card {
+      background:var(--surface2); border-radius:10px; padding:1rem;
+      text-align:left; font-size:.84rem; line-height:2; margin-bottom:1rem;
+    }
+    .success-row { display:flex; justify-content:space-between; }
+    .success-row span:first-child { color:var(--muted); }
+    .success-note { font-size:.76rem; color:var(--muted); }
+
+    /* type filter strip */
+    .type-strip { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.75rem; }
+    .type-chip {
+      padding:.25rem .65rem; border-radius:100px; font-size:.71rem;
+      border:1px solid var(--border); background:var(--surface2); color:var(--muted);
+      cursor:pointer; transition:all .15s;
+    }
+    .type-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(232,240,74,.08); }
   </style>
 </head>
 <body>
@@ -187,7 +279,6 @@
   </a>
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
-    <li><a href="booking.html">Book</a></li>
     <li><a href="schedule.html">Schedule</a></li>
   </ul>
   <div class="nav-actions" id="navActions">
@@ -197,38 +288,43 @@
 
 <div class="sch-page">
 
-  <!-- topbar: stats + car dropdown + search -->
+  <!-- topbar -->
   <div class="sch-topbar">
     <div class="stat-badge"><span class="num" id="stTrips">—</span>&nbsp;TRIPS</div>
     <div class="stat-badge"><span class="num" id="stVeh">—</span>&nbsp;vehicles</div>
     <div class="stat-badge"><span class="num" id="stDrv">—</span>&nbsp;drivers</div>
     <div class="sep"></div>
 
-    <!-- car dropdown -->
+    <!-- car filter dropdown -->
     <div class="car-select-wrap">
       <select id="carSelect" onchange="applyCarFilter()">
         <option value="all">🚗 All vehicles</option>
       </select>
     </div>
 
-    <!-- status filter -->
+    <!-- status filters -->
     <div style="display:flex;gap:.3rem">
       <button class="fbtn active" data-s="all"       onclick="setFilter('all')">All</button>
       <button class="fbtn"        data-s="confirmed" onclick="setFilter('confirmed')">Confirmed</button>
       <button class="fbtn"        data-s="pending"   onclick="setFilter('pending')">Pending</button>
       <button class="fbtn"        data-s="completed" onclick="setFilter('completed')">Completed</button>
     </div>
+
+    <!-- Book Now -->
+    <button class="btn-book-now" onclick="openBooking()">
+      <span class="plus">＋</span> จองรถ
+    </button>
   </div>
 
-  <!-- nav: week navigation -->
+  <!-- week nav -->
   <div class="sch-nav">
     <button class="nbtn" onclick="shiftWeek(-1)">←</button>
     <div class="nav-date" id="navDate">—</div>
     <button class="nbtn" onclick="shiftWeek(1)">→</button>
     <button class="nbtn today" onclick="goToday()">Today</button>
     <div class="nav-right">
-      <button class="nbtn" id="btnPrevDay" onclick="shiftDay(-1)" title="วันก่อน">‹ Day</button>
-      <button class="nbtn" id="btnNextDay" onclick="shiftDay(1)"  title="วันถัดไป">Day ›</button>
+      <button class="nbtn" onclick="shiftDay(-1)">‹ Day</button>
+      <button class="nbtn" onclick="shiftDay(1)">Day ›</button>
     </div>
   </div>
 
@@ -244,6 +340,116 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     BOOKING MODAL XL
+════════════════════════════════════════ -->
+<div class="modal-xl-overlay" id="bookingModal" onclick="closeBookingOut(event)">
+  <div class="modal-xl" id="bookingBox">
+
+    <!-- HEAD -->
+    <div class="mxl-head">
+      <div class="mxl-title">🚗 จองรถ</div>
+      <button class="mxl-close" onclick="closeBooking()">✕</button>
+    </div>
+
+    <!-- BODY (form state) -->
+    <div id="bookingFormWrap">
+      <div class="mxl-body">
+
+        <!-- 1. เลือกรถ (full width) -->
+        <div class="mxl-section">
+          <div class="mxl-section-head">🚗 เลือกรถ <span style="color:var(--danger);font-size:.7rem;font-weight:400;margin-left:.3rem">* จำเป็น</span></div>
+          <div class="mxl-section-body">
+            <div class="type-strip" id="typeStrip"></div>
+            <div class="car-grid-modal" id="carGridM">
+              <div class="loading"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. เลือกคนขับ (full width) -->
+        <div class="mxl-section">
+          <div class="mxl-section-head">🧑‍✈️ เลือกคนขับ <span style="color:var(--danger);font-size:.7rem;font-weight:400;margin-left:.3rem">* จำเป็น</span></div>
+          <div class="mxl-section-body">
+            <div class="drv-grid-modal" id="drvGridM">
+              <div class="loading"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. วันเวลา (left col) -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="mxl-section">
+            <div class="mxl-section-head">📅 วันเวลา</div>
+            <div class="mxl-section-body" style="display:flex;flex-direction:column;gap:.75rem">
+              <div>
+                <label class="form-label">วันรับรถ</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                  <input class="form-input" type="date" id="bStartDate">
+                  <select class="form-select" id="bStartTime"></select>
+                </div>
+              </div>
+              <div>
+                <label class="form-label">วันคืนรถ</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                  <input class="form-input" type="date" id="bEndDate">
+                  <select class="form-select" id="bEndTime"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. สถานที่ + หมายเหตุ (right col) -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="mxl-section" style="flex:1">
+            <div class="mxl-section-head">📍 สถานที่ &amp; หมายเหตุ</div>
+            <div class="mxl-section-body" style="display:flex;flex-direction:column;gap:.75rem">
+              <div>
+                <label class="form-label">จุดรับรถ</label>
+                <input class="form-input" type="text" id="bPickup" placeholder="สนามบิน, โรงแรม...">
+              </div>
+              <div>
+                <label class="form-label">จุดส่งรถ (ถ้าต่างจากจุดรับ)</label>
+                <input class="form-input" type="text" id="bDropoff" placeholder="เว้นว่างถ้าคืนที่เดิม">
+              </div>
+              <div>
+                <label class="form-label">หมายเหตุ</label>
+                <textarea class="form-textarea" id="bNotes" rows="3" placeholder="ข้อมูลเพิ่มเติม..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /mxl-body -->
+
+      <!-- FOOTER -->
+      <div class="mxl-foot">
+        <div class="mxl-alert" id="bAlert"></div>
+        <button class="btn btn-outline" onclick="closeBooking()">ยกเลิก</button>
+        <button class="btn-confirm" id="btnConfirm" onclick="submitBooking()">✅ ยืนยันการจอง</button>
+      </div>
+    </div><!-- /bookingFormWrap -->
+
+    <!-- SUCCESS STATE (hidden initially) -->
+    <div id="bookingSuccessWrap" style="display:none">
+      <div class="success-body">
+        <div class="success-icon" id="sIcon">🎉</div>
+        <div class="success-title">จองสำเร็จ!</div>
+        <div class="success-ref" id="sRef"></div>
+        <div class="success-card" id="sCard"></div>
+        <p class="success-note">ทีมงานจะติดต่อยืนยันเร็วๆ นี้</p>
+      </div>
+      <div class="mxl-foot" style="justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeBooking()">ปิด</button>
+        <button class="btn-confirm" onclick="resetBookingForm()">+ จองคันใหม่</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- tooltip -->
 <div class="tip" id="tip"></div>
 
 <!-- login modal -->
@@ -261,45 +467,29 @@
     <div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="doLogin()">เข้าสู่ระบบ</button></div>
   </div>
 </div>
+
 <div class="toast" id="toast"><span id="toastIcon"></span>&nbsp;<span id="toastMsg"></span></div>
 
 <script src="js/api.js"></script>
 <script>
-/* ── Constants ──────────────────────────────────────────────────── */
+/* ── Constants ── */
 const DOW   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const S_TH  = {confirmed:'Confirmed',pending:'Pending',completed:'Completed',cancelled:'Cancelled'};
 const S_COL = {confirmed:'#378ADD',pending:'#BA7517',completed:'#4caf8a',cancelled:'#e05555'};
 const S_BG  = {confirmed:'rgba(56,138,221,.18)',pending:'rgba(186,117,23,.22)',completed:'rgba(76,175,138,.18)',cancelled:'rgba(224,85,85,.13)'};
+const S_TH  = {confirmed:'Confirmed',pending:'Pending',completed:'Completed',cancelled:'Cancelled'};
+const HOUR_START=6, HOUR_END=22, N_HOURS=16;
 
-// Timeline: 06:00 – 21:00 (16 hours)
-const HOUR_START = 6;
-const HOUR_END   = 22;   // exclusive → columns 06,07,...,21
-const N_HOURS    = HOUR_END - HOUR_START;  // 16
+/* ── Schedule state ── */
+let baseDate=new Date(), allCars=[], allBks=[], filterS='all', carFilter='all';
 
-/* ── State ──────────────────────────────────────────────────────── */
-let baseDate = new Date();
-let allCars  = [], allBks = [];
-let filterS  = 'all';
-let carFilter = 'all';   // 'all' or car.id
+/* ── Booking state ── */
+let bAllCars=[], bAllDrivers=[], bAllTypes=[];
+let selCarId=null, selDrvId=null, currentUser=null, bTypeFilter='all';
 
-/* ── Helpers ────────────────────────────────────────────────────── */
-function getMonday(d){ const dt=new Date(d); dt.setHours(0,0,0,0); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
-function toYMD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function getDays(){ const m=getMonday(baseDate); return Array.from({length:7},(_,i)=>{ const d=new Date(m); d.setDate(d.getDate()+i); return d; }); }
-function shiftWeek(n){ baseDate.setDate(baseDate.getDate()+n*7); load(); }
-function shiftDay(n) { baseDate.setDate(baseDate.getDate()+n);   load(); }
-function goToday()   { baseDate=new Date(); load(); }
-
-function parseTime(t){ // "HH:MM" or "HH.MM" → decimal hours
-  if(!t) return null;
-  const p=String(t).replace(':','.').split('.');
-  return parseInt(p[0])+(parseInt(p[1]||0)/60);
-}
-
-/* ── Init ───────────────────────────────────────────────────────── */
+/* ── Init ── */
 async function init(){
-  try{ const m=await api.me(); if(m.loggedIn) renderNav(m.user); }catch(e){}
+  try{ const m=await api.me(); if(m.loggedIn){ currentUser=m.user; renderNav(m.user); } }catch(e){}
   await load();
 }
 
@@ -317,246 +507,268 @@ function renderNav(u){
 function toggleMenu(){ document.getElementById('userMenu')?.classList.toggle('open'); }
 document.addEventListener('click',e=>{ if(!e.target.closest('.user-menu-wrap')) document.getElementById('userMenu')?.classList.remove('open'); });
 
-/* ── Load data ──────────────────────────────────────────────────── */
+/* ── Schedule helpers ── */
+function getMonday(d){ const dt=new Date(d); dt.setHours(0,0,0,0); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
+function toYMD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function getDays(){ const m=getMonday(baseDate); return Array.from({length:7},(_,i)=>{ const d=new Date(m); d.setDate(d.getDate()+i); return d; }); }
+function shiftWeek(n){ baseDate.setDate(baseDate.getDate()+n*7); load(); }
+function shiftDay(n) { baseDate.setDate(baseDate.getDate()+n);   load(); }
+function goToday()   { baseDate=new Date(); load(); }
+function parseTime(t){ if(!t) return null; const p=String(t).replace(':','.').split('.'); return parseInt(p[0])+(parseInt(p[1]||0)/60); }
+
+/* ── Load schedule ── */
 async function load(){
   document.getElementById('tlOuter').innerHTML='<div class="sch-loading"><div class="loading"><span></span><span></span><span></span></div></div>';
   const days=getDays();
   const fmt=d=>`${DOW[d.getDay()]} ${d.getDate()} ${MONS[d.getMonth()]} ${d.getFullYear()}`;
   document.getElementById('navDate').textContent=`${fmt(days[0])}  —  ${fmt(days[6])}`;
-  try{
-    const data=await apiFetch(`/api/schedule?weekStart=${toYMD(days[0])}`);
-    allCars=data.cars||[]; allBks=data.bookings||[];
-  }catch(e){ allCars=[]; allBks=[]; }
-  populateCarDropdown();
-  updateStats();
-  render(days);
+  try{ const data=await apiFetch(`/api/schedule?weekStart=${toYMD(days[0])}`); allCars=data.cars||[]; allBks=data.bookings||[]; }
+  catch(e){ allCars=[]; allBks=[]; }
+  populateCarDropdown(); updateStats(); render(days);
 }
 
-/* ── Populate dropdown ──────────────────────────────────────────── */
 function populateCarDropdown(){
   const sel=document.getElementById('carSelect');
   const prev=sel.value;
   sel.innerHTML='<option value="all">🚗 All vehicles</option>';
-
-  // group by type
-  const typeMap=new Map();
-  allCars.forEach(c=>{
-    if(!typeMap.has(c.type_id)) typeMap.set(c.type_id,{name:c.type_name,icon:c.type_icon||'',cars:[]});
-    typeMap.get(c.type_id).cars.push(c);
-  });
-  typeMap.forEach(type=>{
-    const grp=document.createElement('optgroup');
-    grp.label=`${type.icon} ${type.name}`;
-    type.cars.forEach(c=>{
-      const opt=document.createElement('option');
-      opt.value=c.id; opt.textContent=`${c.name}${c.seats?' ('+c.seats+' seats)':''}`;
-      grp.appendChild(opt);
-    });
-    sel.appendChild(grp);
-  });
-
-  // restore previous selection if still valid
+  const tmap=new Map();
+  allCars.forEach(c=>{ if(!tmap.has(c.type_id)) tmap.set(c.type_id,{name:c.type_name,icon:c.type_icon||'',cars:[]}); tmap.get(c.type_id).cars.push(c); });
+  tmap.forEach(type=>{ const g=document.createElement('optgroup'); g.label=`${type.icon} ${type.name}`; type.cars.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.name}${c.seats?' ('+c.seats+' seats)':''}`; g.appendChild(o); }); sel.appendChild(g); });
   if(prev && [...sel.options].some(o=>o.value==prev)) sel.value=prev;
   carFilter=sel.value==='all'?'all':parseInt(sel.value);
 }
 
-function applyCarFilter(){
-  const v=document.getElementById('carSelect').value;
-  carFilter=v==='all'?'all':parseInt(v);
-  updateStats(); render();
-}
+function applyCarFilter(){ const v=document.getElementById('carSelect').value; carFilter=v==='all'?'all':parseInt(v); updateStats(); render(); }
+function getFiltered(){ return allBks.filter(b=>{ if(filterS!=='all'&&b.status!==filterS)return false; if(carFilter!=='all'&&b.car_id!==carFilter)return false; return true; }); }
+function getDisplayCars(){ return carFilter==='all'?allCars:allCars.filter(c=>c.id===carFilter); }
+function setFilter(s){ filterS=s; document.querySelectorAll('.fbtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.s===s)); updateStats(); render(); }
+function updateStats(){ const v=getFiltered(); document.getElementById('stTrips').textContent=v.length; document.getElementById('stVeh').textContent=new Set(v.map(b=>b.car_id)).size; document.getElementById('stDrv').textContent=new Set(v.filter(b=>b.driver_name).map(b=>b.driver_name)).size; }
 
-/* ── Filter ─────────────────────────────────────────────────────── */
-function getFiltered(){
-  return allBks.filter(b=>{
-    if(filterS!=='all' && b.status!==filterS) return false;
-    if(carFilter!=='all' && b.car_id!==carFilter) return false;
-    return true;
-  });
-}
-function getDisplayCars(){
-  if(carFilter==='all') return allCars;
-  return allCars.filter(c=>c.id===carFilter);
-}
-
-function setFilter(s){
-  filterS=s;
-  document.querySelectorAll('.fbtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.s===s));
-  updateStats(); render();
-}
-
-function updateStats(){
-  const v=getFiltered();
-  document.getElementById('stTrips').textContent=v.length;
-  document.getElementById('stVeh').textContent=new Set(v.map(b=>b.car_id)).size;
-  document.getElementById('stDrv').textContent=new Set(v.filter(b=>b.driver_name).map(b=>b.driver_name)).size;
-}
-
-/* ── Render timeline ────────────────────────────────────────────── */
+/* ── Render timeline ── */
 function render(days){
   if(!days) days=getDays();
-  const todayStr = toYMD(new Date());
-  const nowH     = new Date().getHours() + new Date().getMinutes()/60;
-  const bks      = getFiltered();
-  const cars     = getDisplayCars();
+  const todayStr=toYMD(new Date()), nowH=new Date().getHours()+new Date().getMinutes()/60;
+  const bks=getFiltered(), cars=getDisplayCars();
+  if(!allCars.length){ document.getElementById('tlOuter').innerHTML='<div class="sch-empty">ไม่พบข้อมูลรถ</div>'; return; }
+  const tmap=new Map();
+  cars.forEach(c=>{ if(!tmap.has(c.type_id)) tmap.set(c.type_id,{name:c.type_name,icon:c.type_icon||'',cars:[]}); tmap.get(c.type_id).cars.push(c); });
+  const selStr=toYMD(baseDate);
 
-  if(!allCars.length){
-    document.getElementById('tlOuter').innerHTML='<div class="sch-empty">ไม่พบข้อมูลรถ</div>';
-    return;
-  }
-
-  // group cars by type
-  const typeMap=new Map();
-  cars.forEach(c=>{
-    if(!typeMap.has(c.type_id)) typeMap.set(c.type_id,{id:c.type_id,name:c.type_name,icon:c.type_icon||'',cars:[]});
-    typeMap.get(c.type_id).cars.push(c);
-  });
-
-  // Build grid: one row per day × each car row = timeline of hours
-  // Layout: rows = (type-header + cars), cols = car-label + 7-days × N_HOURS
-  // Actually: car-label 160px | day1-h06 | day1-h07 | ... | day1-h21 | day2-h06 | ...
-  // That becomes 160 + 7*16 = 113 columns — too many.
-  // Better approach: show ONE day at a time on the timeline, keep week selector for context.
-  // Show a day-picker row, render ONE selected day as timeline (car × hours).
-
-  const selDay = baseDate;
-  const selStr = toYMD(selDay);
-
-  // ── WEEK MINI-HEADER (dot indicator per day) ──
-  let weekBar = '<div style="display:flex;gap:.2rem;padding:.4rem 1.5rem;align-items:center;border-bottom:1px solid var(--border);overflow-x:auto">';
+  // week day picker
+  let weekBar='<div style="display:flex;gap:.2rem;padding:.4rem 1.5rem;align-items:center;border-bottom:1px solid var(--border);overflow-x:auto">';
   days.forEach(d=>{
-    const ds=toYMD(d);
-    const cnt=bks.filter(b=>b.start_date<=ds&&b.end_date>=ds).length;
-    const isT=ds===todayStr;
-    const isSel=ds===selStr;
-    weekBar+=`<div onclick="selectDay('${ds}')" style="
-      display:flex;flex-direction:column;align-items:center;
-      padding:.3rem .5rem;border-radius:8px;cursor:pointer;min-width:48px;
-      background:${isSel?'var(--accent)':'transparent'};
-      border:1px solid ${isSel?'var(--accent)':isT?'rgba(232,240,74,.4)':'var(--border)'};
-      transition:all .15s;
-    ">
+    const ds=toYMD(d), cnt=bks.filter(b=>b.start_date<=ds&&b.end_date>=ds).length;
+    const isT=ds===todayStr, isSel=ds===selStr;
+    weekBar+=`<div onclick="selectDay('${ds}')" style="display:flex;flex-direction:column;align-items:center;padding:.3rem .5rem;border-radius:8px;cursor:pointer;min-width:48px;background:${isSel?'var(--accent)':'transparent'};border:1px solid ${isSel?'var(--accent)':isT?'rgba(232,240,74,.4)':'var(--border)'};transition:all .15s">
       <div style="font-size:.58rem;color:${isSel?'#000':isT?'var(--accent)':'var(--muted)'};text-transform:uppercase;letter-spacing:.06em">${DOW[d.getDay()]}</div>
-      <div style="font-size:1rem;font-weight:700;color:${isSel?'#000':isT?'var(--accent)':'var(--text)'};">${d.getDate()}</div>
+      <div style="font-size:1rem;font-weight:700;color:${isSel?'#000':isT?'var(--accent)':'var(--text)'}">${d.getDate()}</div>
       <div style="font-size:.58rem;color:${isSel?'#000':'var(--muted2)'}">${MONS[d.getMonth()]}</div>
-      ${cnt>0?`<div style="width:5px;height:5px;border-radius:50%;background:${isSel?'#000':'var(--accent)'};margin-top:3px;"></div>`:'<div style="width:5px;height:5px;margin-top:3px;"></div>'}
+      ${cnt>0?`<div style="width:5px;height:5px;border-radius:50%;background:${isSel?'#000':'var(--accent)'};margin-top:3px"></div>`:'<div style="width:5px;height:5px;margin-top:3px"></div>'}
     </div>`;
   });
-  weekBar += '</div>';
+  weekBar+='</div>';
 
-  // ── TIMELINE GRID ──
-  // Columns: 160px (car label) + N_HOURS columns (one per hour)
-  const colTemplate = `160px repeat(${N_HOURS}, minmax(58px,1fr))`;
-
-  let grid = `<div class="tl-grid" style="grid-template-columns:${colTemplate}">`;
-
-  // Header row: car label cell + hour cells
-  grid += `<div class="tl-h0" style="grid-column:1;position:sticky;top:0;z-index:5">
-    ${DOW[selDay.getDay()]} ${selDay.getDate()} ${MONS[selDay.getMonth()]}
-  </div>`;
-  for(let h=HOUR_START; h<HOUR_END; h++){
-    const isNow = selStr===todayStr && Math.floor(nowH)===h;
-    grid+=`<div class="tl-hh${isNow?' now-col':''}" style="position:sticky;top:0;z-index:5">${String(h).padStart(2,'0')}:00</div>`;
+  const colTpl=`160px repeat(${N_HOURS},minmax(58px,1fr))`;
+  let grid=`<div class="tl-grid" style="grid-template-columns:${colTpl}">`;
+  grid+=`<div class="tl-h0">${DOW[baseDate.getDay()]} ${baseDate.getDate()} ${MONS[baseDate.getMonth()]}</div>`;
+  for(let h=HOUR_START;h<HOUR_END;h++){
+    const isNow=selStr===todayStr&&Math.floor(nowH)===h;
+    grid+=`<div class="tl-hh${isNow?' now-col':''}">${String(h).padStart(2,'0')}:00</div>`;
   }
 
-  // For each type → type separator → each car row
-  typeMap.forEach(type=>{
-    // Type separator spans all columns
+  tmap.forEach(type=>{
     grid+=`<div class="tl-type-row" style="grid-column:1/-1">${type.icon} ${type.name}</div>`;
-
     type.cars.forEach(car=>{
-      // Car label
-      grid+=`<div class="tl-car-lbl">
-        <div class="tl-car-name">${car.name}</div>
-        <div class="tl-car-meta">${car.seats?car.seats+' seats':''}</div>
-      </div>`;
-
-      // Get bookings for this car on selected day
-      const carBks = bks.filter(b=>b.car_id===car.id && b.start_date<=selStr && b.end_date>=selStr);
-
-      // Render N_HOURS cells, with booking blocks overlaid
-      for(let h=HOUR_START; h<HOUR_END; h++){
-        const isNow = selStr===todayStr && Math.floor(nowH)===h;
-
-        // Find bookings that START in this hour
-        const startHere = carBks.filter(b=>{
-          const bh = parseTime(b.start_time);
-          return bh!==null && Math.floor(bh)===h;
-        });
-
-        grid += `<div class="tl-cell${isNow?' now-col':''}">`;
-
-        // Current time indicator
-        if(isNow && selStr===todayStr){
-          const pct = ((nowH - h) * 100).toFixed(1);
-          grid+=`<div class="now-line" style="left:${pct}%"><div class="now-dot"></div></div>`;
-        }
-
+      grid+=`<div class="tl-car-lbl"><div class="tl-car-name">${car.name}</div><div class="tl-car-meta">${car.seats?car.seats+' seats':''}</div></div>`;
+      const carBks=bks.filter(b=>b.car_id===car.id&&b.start_date<=selStr&&b.end_date>=selStr);
+      for(let h=HOUR_START;h<HOUR_END;h++){
+        const isNow=selStr===todayStr&&Math.floor(nowH)===h;
+        const startHere=carBks.filter(b=>{ const bh=parseTime(b.start_time); return bh!==null&&Math.floor(bh)===h; });
+        grid+=`<div class="tl-cell${isNow?' now-col':''}">`;
+        if(isNow&&selStr===todayStr){ const pct=((nowH-h)*100).toFixed(1); grid+=`<div class="now-line" style="left:${pct}%"><div class="now-dot"></div></div>`; }
         startHere.forEach(b=>{
-          const startH = parseTime(b.start_time);
-          const endH   = parseTime(b.end_time);
-          const eff_end = (endH!==null && endH>startH) ? endH : startH+1;
-          const clampEnd = Math.min(eff_end, HOUR_END);
-          const spanHours = clampEnd - startH;
-
-          // position within this cell (0–100%) and width in column-widths
-          const leftPct  = ((startH - h) * 100).toFixed(1);
-          // width = spanHours columns, expressed as calc
-          const widthStr = spanHours===1
-            ? `calc(100% - ${leftPct}% - 4px)`
-            : `calc(${spanHours * 100}% + ${(spanHours-1)}px - ${leftPct}% * ${spanHours} - 4px)`;
-
+          const startH=parseTime(b.start_time), endH=parseTime(b.end_time);
+          const eff=endH&&endH>startH?endH:startH+1, clamp=Math.min(eff,HOUR_END), span=clamp-startH;
+          const lp=((startH-h)*100).toFixed(1);
+          const w=span===1?`calc(100% - ${lp}% - 4px)`:`calc(${span*100}% + ${span-1}px - ${lp}% * ${span} - 4px)`;
           const su=(b.user_name||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const sd=(b.driver_name||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const sl=(b.pickup_location||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const sc=car.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
           const st=b.start_time&&b.end_time?`${b.start_time}–${b.end_time}`:(b.start_time||'');
-
-          grid+=`<div class="bk-block bk-${b.status}"
-            style="left:calc(${leftPct}% + 2px);width:${widthStr}"
-            onmouseenter="showTip(event,'${sc}','${st}','${su}','${sd}','${sl}','${b.status}')"
-            onmouseleave="hideTip()">
+          grid+=`<div class="bk-block bk-${b.status}" style="left:calc(${lp}% + 2px);width:${w}" onmouseenter="showTip(event,'${sc}','${st}','${su}','${sd}','${sl}','${b.status}')" onmouseleave="hideTip()">
             <div class="bk-name">${b.user_name||'—'}</div>
             <div class="bk-sub">${st}${b.driver_name?' · '+b.driver_name:''}</div>
           </div>`;
         });
-
-        grid += '</div>';
+        grid+='</div>';
       }
     });
   });
-
-  grid += '</div>';
-
-  document.getElementById('tlOuter').innerHTML = weekBar + `<div style="overflow-x:auto">${grid}</div>`;
+  grid+='</div>';
+  document.getElementById('tlOuter').innerHTML=weekBar+`<div style="overflow-x:auto">${grid}</div>`;
 }
 
-function selectDay(ymd){
-  const [y,m,d]=ymd.split('-').map(Number);
-  baseDate=new Date(y,m-1,d);
-  render();
-}
+function selectDay(ymd){ const [y,m,d]=ymd.split('-').map(Number); baseDate=new Date(y,m-1,d); render(); }
 
-/* ── Tooltip ────────────────────────────────────────────────────── */
+/* ── Tooltip ── */
 function showTip(e,car,time,user,driver,loc,status){
   const t=document.getElementById('tip');
-  t.innerHTML=`<div class="tip-car">${car}</div>
-    ${time?`<div class="tip-row">🕐 ${time}</div>`:''}
-    ${user?`<div class="tip-row">👤 ${user}</div>`:''}
-    ${driver?`<div class="tip-row">🧑‍✈️ ${driver}</div>`:''}
-    ${loc?`<div class="tip-row">📍 ${loc}</div>`:''}
-    <div><span class="tip-badge" style="background:${S_BG[status]};border:1px solid ${S_COL[status]};color:${S_COL[status]}">${S_TH[status]||status}</span></div>`;
+  t.innerHTML=`<div class="tip-car">${car}</div>${time?`<div class="tip-row">🕐 ${time}</div>`:''}${user?`<div class="tip-row">👤 ${user}</div>`:''}${driver?`<div class="tip-row">🧑‍✈️ ${driver}</div>`:''}${loc?`<div class="tip-row">📍 ${loc}</div>`:''}<div><span class="tip-badge" style="background:${S_BG[status]};border:1px solid ${S_COL[status]};color:${S_COL[status]}">${S_TH[status]||status}</span></div>`;
   t.style.display='block'; moveTip(e);
 }
 function moveTip(e){ const t=document.getElementById('tip'); t.style.left=Math.min(e.clientX+14,window.innerWidth-210)+'px'; t.style.top=(e.clientY-10)+'px'; }
 function hideTip(){ document.getElementById('tip').style.display='none'; }
 document.addEventListener('mousemove',e=>{ const t=document.getElementById('tip'); if(t.style.display!=='none') moveTip(e); });
 
-/* ── Auth ───────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════
+   BOOKING MODAL
+═══════════════════════════════════════ */
+function buildTimeOpts(id,def){
+  const sel=document.getElementById(id); sel.innerHTML='';
+  for(let h=0;h<24;h++) for(let m of[0,30]){
+    const v=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    const o=document.createElement('option'); o.value=v; o.textContent=v;
+    if(v===def) o.selected=true; sel.appendChild(o);
+  }
+}
+
+async function openBooking(){
+  if(!currentUser){ openModal('loginModal'); return; }
+  resetBookingForm();
+  document.getElementById('bookingModal').classList.add('open');
+  // load data if not loaded yet
+  if(!bAllCars.length) await loadBookingData();
+}
+
+async function loadBookingData(){
+  try{
+    [bAllTypes, bAllCars, bAllDrivers] = await Promise.all([api.carTypes(), api.cars(), api.drivers()]);
+  }catch(e){ bAllCars=[]; bAllDrivers=[]; bAllTypes=[]; }
+  renderTypeStrip();
+  renderCarGrid();
+  renderDrvGrid();
+}
+
+function renderTypeStrip(){
+  const strip=document.getElementById('typeStrip');
+  strip.innerHTML=`<div class="type-chip active" data-tid="all" onclick="filterBCar('all',this)">ทั้งหมด</div>`;
+  bAllTypes.forEach(t=>{ strip.innerHTML+=`<div class="type-chip" data-tid="${t.id}" onclick="filterBCar(${t.id},this)">${t.icon||''} ${t.name}</div>`; });
+}
+
+function filterBCar(tid,el){
+  bTypeFilter=tid;
+  document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderCarGrid();
+}
+
+function renderCarGrid(){
+  const cars=bTypeFilter==='all'?bAllCars:bAllCars.filter(c=>c.carTypeId==bTypeFilter||c.car_type_id==bTypeFilter);
+  document.getElementById('carGridM').innerHTML=cars.map(c=>`
+    <div class="car-opt${selCarId===c.id?' sel':''}" id="bCar${c.id}" onclick="pickCar(${c.id})">
+      <div class="car-opt-icon">${c.typeIcon||c.type_icon||'🚗'}</div>
+      <div class="car-opt-name">${c.name}</div>
+      <div class="car-opt-type">${c.typeName||c.type_name||''}</div>
+      <div class="car-opt-seats">${c.seats?c.seats+' ที่นั่ง':''}</div>
+    </div>`).join('');
+}
+
+function pickCar(id){
+  selCarId=id;
+  document.querySelectorAll('.car-opt').forEach(el=>el.classList.remove('sel'));
+  document.getElementById('bCar'+id)?.classList.add('sel');
+  hideAlert();
+}
+
+function renderDrvGrid(){
+  document.getElementById('drvGridM').innerHTML=bAllDrivers.map(d=>`
+    <div class="drv-opt${!d.available?' unavail':''}${selDrvId===d.id?' sel':''}" id="bDrv${d.id}" onclick="${d.available?`pickDrv(${d.id})`:''}">
+      <div class="drv-opt-name">🧑‍✈️ ${d.name}</div>
+      <div class="drv-opt-meta">📞 ${d.phone||'—'}${d.note?`<br>💬 ${d.note}`:''}</div>
+    </div>`).join('');
+}
+
+function pickDrv(id){
+  selDrvId=id;
+  document.querySelectorAll('.drv-opt').forEach(el=>el.classList.remove('sel'));
+  document.getElementById('bDrv'+id)?.classList.add('sel');
+  hideAlert();
+}
+
+function hideAlert(){ const a=document.getElementById('bAlert'); a.className='mxl-alert'; }
+
+async function submitBooking(){
+  if(!selCarId){ showAlert('กรุณาเลือกรถ'); return; }
+  if(!selDrvId){ showAlert('กรุณาเลือกคนขับ'); return; }
+  const sd=document.getElementById('bStartDate').value;
+  const ed=document.getElementById('bEndDate').value;
+  if(!sd||!ed){ showAlert('กรุณาระบุวันรับและคืนรถ'); return; }
+  if(sd>ed){ showAlert('วันคืนรถต้องไม่ก่อนวันรับรถ'); return; }
+
+  document.getElementById('btnConfirm').disabled=true;
+  const res=await api.book({
+    carId:selCarId, driverId:selDrvId,
+    startDate:sd, startTime:document.getElementById('bStartTime').value,
+    endDate:ed,   endTime:document.getElementById('bEndTime').value,
+    pickupLocation:document.getElementById('bPickup').value,
+    dropoffLocation:document.getElementById('bDropoff').value,
+    notes:document.getElementById('bNotes').value
+  });
+  document.getElementById('btnConfirm').disabled=false;
+
+  if(res.success){
+    const b=res.booking;
+    const carName   =b.car_name||b.carName||'—';
+    const carIcon   =b.car_type_icon||b.carTypeIcon||'🚗';
+    const startDate =new Date(b.start_date||b.startDate);
+    const endDate   =new Date(b.end_date||b.endDate);
+    const fmt=d=>isNaN(d)?'—':d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('sIcon').textContent=carIcon;
+    document.getElementById('sRef').textContent=`หมายเลขจอง #${String(b.id).padStart(5,'0')}`;
+    document.getElementById('sCard').innerHTML=`
+      <div class="success-row"><span>รถ</span><span>${carName}</span></div>
+      <div class="success-row"><span>วันรับรถ</span><span>${fmt(startDate)} ${b.start_time||b.startTime||''}</span></div>
+      <div class="success-row"><span>วันคืนรถ</span><span>${fmt(endDate)} ${b.end_time||b.endTime||''}</span></div>
+      <div class="success-row"><span>จุดรับ</span><span>${b.pickup_location||b.pickupLocation||'—'}</span></div>
+      ${b.driver_name||b.driverName?`<div class="success-row"><span>คนขับ</span><span>${b.driver_name||b.driverName}</span></div>`:''}`;
+    document.getElementById('bookingFormWrap').style.display='none';
+    document.getElementById('bookingSuccessWrap').style.display='block';
+    load(); // refresh schedule
+  } else {
+    showAlert(res.message||'เกิดข้อผิดพลาด');
+  }
+}
+
+function showAlert(msg){ const a=document.getElementById('bAlert'); a.textContent=msg; a.className='mxl-alert show'; a.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+
+function resetBookingForm(){
+  selCarId=null; selDrvId=null;
+  document.getElementById('bookingFormWrap').style.display='block';
+  document.getElementById('bookingSuccessWrap').style.display='none';
+  document.getElementById('bAlert').className='mxl-alert';
+  document.getElementById('btnConfirm').disabled=false;
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('bStartDate').value=today;
+  document.getElementById('bEndDate').value=today;
+  document.getElementById('bStartDate').min=today;
+  document.getElementById('bEndDate').min=today;
+  document.getElementById('bPickup').value='';
+  document.getElementById('bDropoff').value='';
+  document.getElementById('bNotes').value='';
+  buildTimeOpts('bStartTime','09:00');
+  buildTimeOpts('bEndTime','17:00');
+  if(bAllCars.length){ renderCarGrid(); renderDrvGrid(); }
+}
+
+function closeBooking(){ document.getElementById('bookingModal').classList.remove('open'); }
+function closeBookingOut(e){ if(e.target===document.getElementById('bookingModal')) closeBooking(); }
+
+/* ── Auth ── */
 async function doLogin(){
   const d=await api.login(document.getElementById('loginEmail').value,document.getElementById('loginPassword').value);
-  if(d.success){closeModal('loginModal');location.reload();}
-  else{const a=document.getElementById('loginAlert');a.className='alert show alert-error';a.textContent=d.message;}
+  if(d.success){ closeModal('loginModal'); currentUser=d.user||{name:'User'}; location.reload(); }
+  else{ const a=document.getElementById('loginAlert'); a.className='alert show alert-error'; a.textContent=d.message; }
 }
 async function doLogout(){ await api.logout(); location.reload(); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
