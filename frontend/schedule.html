@@ -145,6 +145,15 @@
     .tip-row { color:var(--muted); margin:2px 0; }
     .tip-badge { display:inline-block; padding:2px 8px; border-radius:100px; font-size:.66rem; margin-top:.3rem; }
 
+
+    .recur-day {
+      display:flex; align-items:center; gap:.35rem;
+      padding:.3rem .6rem; border:1px solid var(--border); border-radius:6px;
+      font-size:.78rem; cursor:pointer; transition:all .15s; background:var(--surface2);
+    }
+    .recur-day:has(input:checked) { border-color:var(--accent); background:rgba(232,240,74,.08); color:var(--accent); }
+    .recur-day input { accent-color:var(--accent); }
+
     .sch-loading { display:flex; justify-content:center; padding:4rem; }
     .sch-empty   { text-align:center; padding:4rem; color:var(--muted); font-size:.88rem; }
 
@@ -417,6 +426,26 @@
                 <label class="form-label">หมายเหตุ</label>
                 <textarea class="form-textarea" id="bNotes" rows="3" placeholder="ข้อมูลเพิ่มเติม..."></textarea>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Recurring -->
+        <div class="mxl-section">
+          <div class="mxl-section-head" style="cursor:pointer;user-select:none" onclick="toggleRecurring()">
+            🔁 จองซ้ำ (Recurring)
+            <span style="margin-left:auto;font-size:.7rem;color:var(--muted)" id="recurToggleLabel">▸ ปิดอยู่</span>
+          </div>
+          <div class="mxl-section-body" id="recurBody" style="display:none">
+            <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">ระบบจะสร้างการจองให้อัตโนมัติ 8 สัปดาห์ข้างหน้า ในวันที่เลือก</div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+              <label class="recur-day"><input type="checkbox" value="1"> จ</label>
+              <label class="recur-day"><input type="checkbox" value="2"> อ</label>
+              <label class="recur-day"><input type="checkbox" value="3"> พ</label>
+              <label class="recur-day"><input type="checkbox" value="4"> พฤ</label>
+              <label class="recur-day"><input type="checkbox" value="5"> ศ</label>
+              <label class="recur-day"><input type="checkbox" value="6"> ส</label>
+              <label class="recur-day"><input type="checkbox" value="0"> อา</label>
             </div>
           </div>
         </div>
@@ -698,6 +727,14 @@ function pickDrv(id){
 
 function hideAlert(){ const a=document.getElementById('bAlert'); a.className='mxl-alert'; }
 
+function toggleRecurring(){
+  const body = document.getElementById('recurBody');
+  const label = document.getElementById('recurToggleLabel');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  label.textContent = open ? '▾ เปิดอยู่' : '▸ ปิดอยู่';
+}
+
 async function submitBooking(){
   if(!selCarId){ showAlert('กรุณาเลือกรถ'); return; }
   if(!selDrvId){ showAlert('กรุณาเลือกคนขับ'); return; }
@@ -707,13 +744,20 @@ async function submitBooking(){
   if(sd>ed){ showAlert('วันคืนรถต้องไม่ก่อนวันรับรถ'); return; }
 
   document.getElementById('btnConfirm').disabled=true;
+  const recurBody = document.getElementById('recurBody');
+  const isRecurring = recurBody && recurBody.style.display !== 'none';
+  const recurDays = isRecurring
+    ? [...document.querySelectorAll('.recur-day input:checked')].map(el=>parseInt(el.value))
+    : [];
   const res=await api.book({
     carId:selCarId, driverId:selDrvId,
     startDate:sd, startTime:document.getElementById('bStartTime').value,
     endDate:ed,   endTime:document.getElementById('bEndTime').value,
     pickupLocation:document.getElementById('bPickup').value,
     dropoffLocation:document.getElementById('bDropoff').value,
-    notes:document.getElementById('bNotes').value
+    notes:document.getElementById('bNotes').value,
+    recurring: isRecurring && recurDays.length > 0,
+    recurringDays: recurDays,
   });
   document.getElementById('btnConfirm').disabled=false;
 
@@ -732,6 +776,9 @@ async function submitBooking(){
       <div class="success-row"><span>วันคืนรถ</span><span>${fmt(endDate)} ${b.end_time||b.endTime||''}</span></div>
       <div class="success-row"><span>จุดรับ</span><span>${b.pickup_location||b.pickupLocation||'—'}</span></div>
       ${b.driver_name||b.driverName?`<div class="success-row"><span>คนขับ</span><span>${b.driver_name||b.driverName}</span></div>`:''}`;
+    if(res.count > 1) {
+      document.getElementById('sRef').textContent += ` (+${res.count-1} recurring)`;
+    }
     document.getElementById('bookingFormWrap').style.display='none';
     document.getElementById('bookingSuccessWrap').style.display='block';
     load(); // refresh schedule
@@ -759,6 +806,12 @@ function resetBookingForm(){
   buildTimeOpts('bStartTime','09:00');
   buildTimeOpts('bEndTime','17:00');
   if(bAllCars.length){ renderCarGrid(); renderDrvGrid(); }
+  // reset recurring
+  const rb = document.getElementById('recurBody');
+  if(rb) rb.style.display='none';
+  const rl = document.getElementById('recurToggleLabel');
+  if(rl) rl.textContent='▸ ปิดอยู่';
+  document.querySelectorAll('.recur-day input').forEach(el=>el.checked=false);
 }
 
 function closeBooking(){ document.getElementById('bookingModal').classList.remove('open'); }

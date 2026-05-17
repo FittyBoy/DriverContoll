@@ -41,6 +41,8 @@
     <ul class="admin-nav">
       <li class="nav-section">ภาพรวม</li>
       <li><a href="#" id="navDashboard" class="active" onclick="showTab('dashboard',this)">📊 Dashboard</a></li>
+      <li><a href="#" id="navAnalytics" onclick="showTab('analytics',this)">📈 Analytics</a></li>
+      <li><a href="#" id="navAnalytics" onclick="showTab('analytics',this)">📈 Analytics</a></li>
       <li class="nav-section">ข้อมูลหลัก</li>
       <li><a href="#" id="navMaster"    onclick="showTab('master',this)">🗂️ Master Data</a></li>
       <li><a href="#" id="navCars"      onclick="showTab('cars',this)">🚗 จัดการรถ</a></li>
@@ -178,6 +180,10 @@
         <div class="table-wrap">
           <div class="table-header">
             <div class="table-title">รายการจอง</div>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-sm btn-outline" onclick="exportSchedule()" style="font-size:.75rem">
+                📥 Export Excel
+              </button>
             <input class="form-input" style="max-width:240px" placeholder="🔍 ค้นหา..." id="searchQ" oninput="filterBookings()">
           </div>
           <div style="overflow-x:auto">
@@ -193,6 +199,24 @@
         <div id="pendingCards"></div>
       </div>
 
+
+      <!-- ANALYTICS TAB -->
+      <div class="tab-content" id="tab-analytics">
+        <div class="admin-header">
+          <div>
+            <div class="admin-title">📈 Analytics</div>
+            <div class="admin-subtitle">สถิติการใช้งานระบบ</div>
+          </div>
+          <select id="analyticsRange" onchange="loadAnalytics()" style="padding:.35rem .7rem;font-size:.78rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text)">
+            <option value="7">7 วัน</option>
+            <option value="30" selected>30 วัน</option>
+            <option value="90">90 วัน</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem" id="analyticsGrid">
+          <div class="loading"><span></span><span></span><span></span></div>
+        </div>
+      </div>
     </div><!-- /adminContent -->
   </div>
 </div>
@@ -380,14 +404,15 @@ function actionBtns(b){
   return `<div style="display:flex;gap:.3rem">${s}</div>`;
 }
 
+async function quickStatus(id,status){ return setStatus(id,status); }
 async function setStatus(id,status){
-  await fetch(`/api/admin/bookings/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  await api.admin.updateBooking(id,{status});
   toast('✅',`อัปเดตเป็น "${ST[status]}" สำเร็จ`,'success');
   await loadBookings(); await loadStats();
 }
 async function delBooking(id){
   if(!confirm('ลบการจองนี้?')) return;
-  await fetch(`/api/admin/bookings/${id}`,{method:'DELETE'});
+  await api.admin.deleteBooking(id);
   toast('🗑','ลบแล้ว','success');
   await loadBookings(); await loadStats();
 }
@@ -625,6 +650,93 @@ async function login(){
 }
 
 init();
+
+// ── Export Excel ──────────────────────────────────────────────────────────
+function exportSchedule(){
+  const mon = getMonday(new Date());
+  const ys  = [mon.getFullYear(), String(mon.getMonth()+1).padStart(2,'0'), String(mon.getDate()).padStart(2,'0')].join('-');
+  const url = `http://localhost:3000/api/admin/export/schedule?weekStart=${ys}`;
+  window.open(url, '_blank');
+}
+function getMonday(d){ const dt=new Date(d); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
+
+// ── Analytics ─────────────────────────────────────────────────────────────
+async function loadAnalytics(){
+  const range = document.getElementById('analyticsRange')?.value || 30;
+  const grid  = document.getElementById('analyticsGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="loading"><span></span><span></span><span></span></div>';
+  try {
+    const d = await apiFetch(`/api/admin/analytics?range=${range}`);
+    grid.innerHTML = '';
+
+    // Top Cars bar chart
+    grid.appendChild(makeCard('🚗 รถที่ใช้บ่อยสุด', barChart(d.topCars, 'car_name', 'bookings', '#3b82f6')));
+
+    // Top Drivers
+    grid.appendChild(makeCard('🧑‍✈️ คนขับที่ขับมากสุด', barChart(d.topDrivers, 'driver_name', 'trips', '#10b981')));
+
+    // Peak Hours
+    const peakFull = Array.from({length:16},(_,i)=>{
+      const h=i+6;
+      const found=d.peakHours.find(p=>p.hour===h);
+      return { label: String(h).padStart(2,'0')+':00', cnt: found?found.cnt:0 };
+    });
+    grid.appendChild(makeCard('⏰ Peak Hours', hourChart(peakFull)));
+
+    // Weekly trend
+    grid.appendChild(makeCard('📅 Trend รายสัปดาห์', weeklyChart(d.weekly)));
+
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--danger);padding:1rem">Load failed: ${e.message}</div>`;
+  }
+}
+
+function makeCard(title, innerHtml){
+  const div = document.createElement('div');
+  div.className = 'booking-card';
+  div.innerHTML = `<div class="booking-card-title">${title}</div>${innerHtml}`;
+  return div;
+}
+
+function barChart(data, labelKey, valueKey, color){
+  if (!data?.length) return '<div style="color:var(--muted);font-size:.8rem;padding:.5rem">ไม่มีข้อมูล</div>';
+  const max = Math.max(...data.map(d=>d[valueKey]),1);
+  return data.map(d => `
+    <div style="margin:.45rem 0">
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:3px">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">${d[labelKey]}</span>
+        <span style="color:var(--accent);font-weight:600">${d[valueKey]}</span>
+      </div>
+      <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(d[valueKey]/max*100)}%;background:${color};border-radius:4px;transition:width .4s"></div>
+      </div>
+    </div>`).join('');
+}
+
+function hourChart(data){
+  const max = Math.max(...data.map(d=>d.cnt),1);
+  return '<div style="display:flex;align-items:flex-end;gap:2px;height:80px;padding:.5rem 0">' +
+    data.map(d => `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:100%;background:${d.cnt>0?'var(--accent)':'var(--surface2)'};border-radius:2px 2px 0 0;opacity:${d.cnt>0?0.4+d.cnt/max*0.6:0.3};height:${Math.round(d.cnt/max*60)+4}px"></div>
+        <div style="font-size:.5rem;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);height:22px">${d.label.slice(0,2)}</div>
+      </div>`).join('') + '</div>';
+}
+
+function weeklyChart(data){
+  if (!data?.length) return '<div style="color:var(--muted);font-size:.8rem;padding:.5rem">ไม่มีข้อมูล</div>';
+  const max = Math.max(...data.map(d=>d.cnt),1);
+  const fmtW = s => { const d=new Date(s); return (d.getDate()+'/'+(d.getMonth()+1)); };
+  return '<div style="display:flex;align-items:flex-end;gap:4px;height:90px;padding:.5rem 0">' +
+    data.map(d => `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="font-size:.6rem;color:var(--accent);font-weight:600">${d.cnt}</div>
+        <div style="width:100%;background:var(--accent);opacity:.7;border-radius:2px;height:${Math.round(d.cnt/max*55)+4}px"></div>
+        <div style="font-size:.55rem;color:var(--muted)">${fmtW(d.week_start)}</div>
+      </div>`).join('') + '</div>';
+}
+
 </script>
 </body>
 </html>

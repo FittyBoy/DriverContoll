@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>ตาราง Trip ของฉัน</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background:var(--bg); }
+    .drv-page { max-width:480px; margin:0 auto; padding:5rem 1rem 3rem; }
+
+    /* today banner */
+    .today-banner {
+      background:var(--accent); color:#000; border-radius:12px;
+      padding:1rem 1.25rem; margin-bottom:1.25rem;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .today-banner .date { font-size:1.1rem; font-weight:700; }
+    .today-banner .count { font-size:.8rem; font-weight:600; opacity:.75; }
+
+    /* day chips */
+    .day-row { display:flex; gap:.4rem; overflow-x:auto; padding:.4rem 0; margin-bottom:1.25rem; scrollbar-width:none; }
+    .day-row::-webkit-scrollbar { display:none; }
+    .day-chip {
+      display:flex; flex-direction:column; align-items:center;
+      padding:.4rem .55rem; border-radius:10px; min-width:48px; cursor:pointer;
+      border:1px solid var(--border); background:var(--surface); flex-shrink:0;
+      transition:all .15s;
+    }
+    .day-chip.sel     { background:var(--accent); border-color:var(--accent); }
+    .day-chip.has-dot::after { content:''; display:block; width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:3px; }
+    .day-chip.sel::after     { background:#000; }
+    .day-chip .dc-dow  { font-size:.58rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+    .day-chip .dc-date { font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.1; }
+    .day-chip.sel .dc-dow, .day-chip.sel .dc-date { color:#000; }
+
+    /* trip cards */
+    .trip-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:12px; margin-bottom:.75rem; overflow:hidden;
+      transition:transform .15s, box-shadow .15s;
+      animation: cardIn .3s ease both;
+    }
+    @keyframes cardIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .trip-card-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem; background:var(--surface2);
+      border-bottom:1px solid var(--border);
+    }
+    .trip-time { font-size:1.3rem; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+    .trip-car  { font-size:.75rem; color:var(--muted); }
+    .trip-body { padding:.85rem 1rem; }
+    .trip-route {
+      display:flex; align-items:flex-start; gap:.75rem;
+      margin-bottom:.6rem;
+    }
+    .route-pins { display:flex; flex-direction:column; align-items:center; gap:0; padding-top:3px; }
+    .pin { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .pin-from { background:#3b82f6; }
+    .pin-to   { background:var(--accent); }
+    .route-line { width:2px; height:20px; background:var(--border); margin:.1rem 0; }
+    .route-text { flex:1; }
+    .from-lbl, .to-lbl { font-size:.72rem; color:var(--muted); letter-spacing:.04em; margin-bottom:.05rem; }
+    .from-loc, .to-loc { font-size:.88rem; font-weight:600; color:var(--text); line-height:1.3; }
+    .trip-pass { font-size:.8rem; color:var(--muted); margin-top:.5rem; }
+    .trip-pass b { color:var(--text); }
+    .trip-remark { font-size:.76rem; color:var(--orange,#f59e0b); margin-top:.3rem; padding:.25rem .5rem; background:rgba(245,158,11,.08); border-radius:5px; border-left:2px solid; }
+
+    /* empty state */
+    .empty { text-align:center; padding:4rem 1rem; color:var(--muted); }
+    .empty-icon { font-size:3rem; opacity:.3; margin-bottom:.75rem; }
+
+    /* login prompt */
+    .login-prompt { text-align:center; padding:3rem 1rem; }
+    .login-prompt p { color:var(--muted); margin-bottom:1.25rem; font-size:.9rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">
+    <div class="logo-badge">AGC</div>
+    <div><div class="logo-name">Microglass</div><div class="logo-sub">Driver View</div></div>
+  </a>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-outline btn-sm" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+  </div>
+</nav>
+
+<div class="drv-page" id="drvPage">
+  <div class="login-prompt" id="loginPrompt">
+    <div style="font-size:2.5rem;margin-bottom:.75rem">🧑‍✈️</div>
+    <p>เข้าสู่ระบบเพื่อดูตาราง Trip ของคุณ</p>
+    <button class="btn btn-primary" onclick="openModal('loginModal')">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- login modal -->
+<div class="modal-overlay" id="loginModal" onclick="closeModal('loginModal',event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🧑‍✈️ เข้าสู่ระบบ</div>
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert" id="loginAlert"></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" id="loginEmail" placeholder="driver@agc.com"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input class="form-input" type="password" id="loginPassword" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" style="flex:1" onclick="doLogin()">เข้าสู่ระบบ</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastIcon"></span>&nbsp;<span id="toastMsg"></span></div>
+
+<script src="js/api.js"></script>
+<script>
+const DOW   = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const MONS  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+let curUser  = null;
+let allTrips = [];
+let selDate  = new Date(); selDate.setHours(0,0,0,0);
+
+function toYMD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+async function init(){
+  try {
+    const m = await api.me();
+    if (m.loggedIn) { curUser = m.user; startApp(); }
+  } catch(e) {}
+}
+
+function startApp(){
+  document.getElementById('navActions').innerHTML = `
+    <span style="font-size:.76rem;color:var(--muted)">👤 ${curUser.name}</span>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">ออก</button>`;
+  document.getElementById('loginPrompt').style.display = 'none';
+  loadTrips();
+}
+
+async function loadTrips(){
+  const page = document.getElementById('drvPage');
+  page.innerHTML = '<div class="sch-loading" style="padding:4rem;display:flex;justify-content:center"><div class="loading"><span></span><span></span><span></span></div></div>';
+
+  try {
+    // Load trip data for driver (from trips table filtered by driver name)
+    // Also load bookings for this user
+    const [tripsData, booksData] = await Promise.all([
+      api.trips({ weekStart: getWeekMonday() }).catch(()=>[]),
+      api.myBookings().catch(()=>[]),
+    ]);
+
+    // Filter trips by driver name (case-insensitive partial match)
+    const myName = curUser.name.toLowerCase();
+    allTrips = tripsData.filter(t => (t.driver_name||'').toLowerCase().includes(myName.split(' ')[0]?.toLowerCase() || ''));
+
+    render(page);
+  } catch(e) {
+    page.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--danger)">${e.message}</div>`;
+  }
+}
+
+function getWeekMonday(){
+  const d = new Date(); const day = d.getDay();
+  d.setDate(d.getDate() - (day===0?6:day-1));
+  return toYMD(d);
+}
+
+function render(container){
+  // Build 7-day chips around selDate
+  const mon  = new Date(selDate); mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+  const days = Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return d; });
+  const today = toYMD(new Date());
+
+  // Today's trips for banner
+  const selStr   = toYMD(selDate);
+  const todayTrips = allTrips.filter(t => (t.trip_date||'').slice(0,10) === selStr);
+
+  let html = '';
+
+  // Today banner
+  html += `<div class="today-banner">
+    <div>
+      <div class="date">${DOW[selDate.getDay()]} ${selDate.getDate()} ${MONS[selDate.getMonth()]} ${selDate.getFullYear()}</div>
+    </div>
+    <div class="count">${todayTrips.length} trip${todayTrips.length!==1?'s':''}</div>
+  </div>`;
+
+  // Day chips
+  html += '<div class="day-row">';
+  days.forEach(d => {
+    const ds   = toYMD(d);
+    const isT  = ds === today;
+    const isSel= ds === selStr;
+    const cnt  = allTrips.filter(t=>(t.trip_date||'').slice(0,10)===ds).length;
+    html += `<div class="day-chip${isSel?' sel':''}${cnt>0?' has-dot':''}" onclick="selectDay('${ds}')">
+      <div class="dc-dow">${DOW[d.getDay()]}</div>
+      <div class="dc-date" style="${isT&&!isSel?'color:var(--accent)':''}">${d.getDate()}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Trip cards
+  if (!todayTrips.length) {
+    html += `<div class="empty"><div class="empty-icon">🚗</div><p>ไม่มี Trip วันนี้</p></div>`;
+  } else {
+    todayTrips
+      .sort((a,b) => (a.pickup_time||'').localeCompare(b.pickup_time||''))
+      .forEach((t, i) => {
+        html += `<div class="trip-card" style="animation-delay:${i*0.06}s">
+          <div class="trip-card-head">
+            <div class="trip-time">${t.pickup_time || '—'}</div>
+            <div class="trip-car">${t.car_type_label || ''} · ${t.registration_plate || ''}</div>
+          </div>
+          <div class="trip-body">
+            <div class="trip-route">
+              <div class="route-pins">
+                <div class="pin pin-from"></div>
+                <div class="route-line"></div>
+                <div class="pin pin-to"></div>
+              </div>
+              <div class="route-text">
+                <div class="from-lbl">รับที่</div>
+                <div class="from-loc">${t.pickup_location}</div>
+                <div class="to-lbl" style="margin-top:.4rem">ส่งที่</div>
+                <div class="to-loc">${t.dropoff_location}</div>
+              </div>
+            </div>
+            <div class="trip-pass">ผู้โดยสาร: <b>${t.passenger_name}</b></div>
+            ${t.remarks ? `<div class="trip-remark">📝 ${t.remarks}</div>` : ''}
+          </div>
+        </div>`;
+      });
+  }
+
+  container.innerHTML = html;
+}
+
+function selectDay(ymd){
+  const [y,m,d] = ymd.split('-').map(Number);
+  selDate = new Date(y,m-1,d);
+  const page = document.getElementById('drvPage');
+  render(page);
+}
+
+async function doLogin(){
+  const d = await api.login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+  if (d.success) { curUser = d.user||{name:'Driver'}; closeModal('loginModal'); startApp(); }
+  else { const a=document.getElementById('loginAlert'); a.className='alert show alert-error'; a.textContent=d.message; }
+}
+async function doLogout(){ await api.logout(); location.reload(); }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id,e){ if(e&&e.target!==document.getElementById(id))return; document.getElementById(id).classList.remove('open'); }
+function toast(icon,msg,type){ const t=document.getElementById('toast'); document.getElementById('toastIcon').textContent=icon; document.getElementById('toastMsg').textContent=msg; t.className=`toast show toast-${type}`; setTimeout(()=>t.classList.remove('show'),3000); }
+
+init();
+</script>
+</body>
+</html>
