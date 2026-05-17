@@ -305,7 +305,7 @@ let allBookings=[], allCarTypes=[], allDrivers=[], allCars=[];
 
 // ── INIT ────────────────────────────────────────────────────────────────────
 async function init(){
-  const d=await fetch('/api/me').then(r=>r.json());
+  const d=await api.me();
   if(!d.loggedIn||d.user.role!=='admin'){
     document.getElementById('accessDenied').style.display='block';
     openModal('loginModal'); return;
@@ -322,7 +322,7 @@ async function loadAll(){
 
 // ── STATS ────────────────────────────────────────────────────────────────────
 async function loadStats(){
-  const s=await fetch('/api/admin/stats').then(r=>r.json());
+  const s=await api.admin.stats();
   document.getElementById('s-total').textContent=s.totalBookings;
   document.getElementById('s-pending').textContent=s.pending;
   document.getElementById('s-confirmed').textContent=s.confirmed;
@@ -333,7 +333,7 @@ async function loadStats(){
 
 // ── BOOKINGS ─────────────────────────────────────────────────────────────────
 async function loadBookings(){
-  allBookings=await fetch('/api/admin/bookings').then(r=>r.json());
+  allBookings=await api.admin.bookings();
   renderAllBookings(allBookings);
   renderRecent([...allBookings].reverse().slice(0,6));
   renderPending(allBookings.filter(b=>b.status==='pending'));
@@ -425,7 +425,7 @@ function filterBookings(){
 
 // ── CAR TYPES master ─────────────────────────────────────────────────────────
 async function loadCarTypes(){
-  allCarTypes=await fetch('/api/cartypes').then(r=>r.json());
+  allCarTypes=await api.carTypes();
   renderCarTypes();
   populateCarTypeSelects();
 }
@@ -458,7 +458,7 @@ async function addCarType(){
   const name=document.getElementById('ctName').value.trim();
   const desc=document.getElementById('ctDesc').value.trim();
   if(!name){toast('⚠️','กรุณาระบุชื่อประเภท','error');return;}
-  const r=await fetch('/api/cartypes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({icon,name,description:desc})}).then(x=>x.json());
+  const r=await api.admin.addCarType({icon,name,description:desc});
   if(r.success){document.getElementById('ctIcon').value='';document.getElementById('ctName').value='';document.getElementById('ctDesc').value='';
     toast('✅','เพิ่มประเภทรถสำเร็จ','success'); await loadCarTypes(); await loadStats();}
   else toast('⚠️',r.message,'error');
@@ -476,20 +476,20 @@ function openEditCt(id){
 async function saveCarType(){
   const id=parseInt(document.getElementById('editCtId').value);
   const body={icon:document.getElementById('editCtIcon').value,name:document.getElementById('editCtName').value,description:document.getElementById('editCtDesc').value};
-  await fetch(`/api/cartypes/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  await api.admin.updateCarType(id, body);
   closeModal('editCtModal'); toast('✅','บันทึกสำเร็จ','success'); await loadCarTypes();
 }
 
 async function deleteCarType(id){
   if(!confirm('ลบประเภทรถนี้?')) return;
-  const r=await fetch(`/api/cartypes/${id}`,{method:'DELETE'}).then(x=>x.json());
+  const r=await api.admin.deleteCarType(id);
   if(r.success){toast('🗑','ลบแล้ว','success'); await loadCarTypes(); await loadStats();}
   else toast('⚠️',r.message,'error');
 }
 
 // ── DRIVERS master ────────────────────────────────────────────────────────────
 async function loadDrivers(){
-  allDrivers=await fetch('/api/drivers').then(r=>r.json());
+  allDrivers=await api.drivers();
   renderDrivers();
 }
 
@@ -517,7 +517,7 @@ async function addDriver(){
   const license=document.getElementById('drvLicense').value.trim();
   const note=document.getElementById('drvNote').value.trim();
   if(!name||!phone){toast('⚠️','กรุณาระบุชื่อและเบอร์โทร','error');return;}
-  const r=await fetch('/api/drivers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,license,note})}).then(x=>x.json());
+  const r=await api.admin.addDriver({name,phone,license,note});
   if(r.success){['drvName','drvPhone','drvLicense','drvNote'].forEach(i=>document.getElementById(i).value='');
     toast('✅','เพิ่มคนขับสำเร็จ','success'); await loadDrivers(); await loadStats();}
   else toast('⚠️',r.message,'error');
@@ -539,19 +539,19 @@ async function saveDriver(){
   const body={name:document.getElementById('editDrvName').value,phone:document.getElementById('editDrvPhone').value,
     license:document.getElementById('editDrvLicense').value,note:document.getElementById('editDrvNote').value,
     available:document.getElementById('editDrvAvail').value==='true'};
-  await fetch(`/api/drivers/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  await api.admin.updateDriver(id, body);
   closeModal('editDrvModal'); toast('✅','บันทึกสำเร็จ','success'); await loadDrivers();
 }
 
 async function deleteDriver(id){
   if(!confirm('ลบคนขับคนนี้?')) return;
-  await fetch(`/api/drivers/${id}`,{method:'DELETE'});
+  await api.admin.deleteDriver(id);
   toast('🗑','ลบแล้ว','success'); await loadDrivers(); await loadStats();
 }
 
 // ── CARS management ───────────────────────────────────────────────────────────
 async function loadCars(){
-  allCars=await fetch('/api/cars').then(r=>r.json());
+  allCars=await api.cars();
   renderCarsTable();
 }
 
@@ -577,7 +577,7 @@ async function addCar(){
   const seats=document.getElementById('newCarSeats').value;
   const description=document.getElementById('newCarDesc').value.trim();
   if(!name||!carTypeId){toast('⚠️','กรุณากรอกชื่อรถและประเภท','error');return;}
-  const r=await fetch('/api/cars',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,carTypeId,seats,description})}).then(x=>x.json());
+  const r=await api.admin.addCar({name,carTypeId,seats,description});
   if(r.success){['newCarName','newCarSeats','newCarDesc'].forEach(i=>document.getElementById(i).value='');
     toast('✅','เพิ่มรถสำเร็จ','success'); await loadCars(); await loadStats();}
   else toast('⚠️',r.message,'error');
@@ -601,13 +601,13 @@ async function saveCar(){
   const body={name:document.getElementById('editCarName').value,carTypeId:document.getElementById('editCarType').value,
     seats:document.getElementById('editCarSeats').value,description:document.getElementById('editCarDesc').value,
     available:document.getElementById('editCarAvail').value==='true'};
-  await fetch(`/api/cars/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  await api.admin.updateCar(id, body);
   closeModal('editCarModal'); toast('✅','บันทึกสำเร็จ','success'); await loadCars();
 }
 
 async function deleteCar(id){
   if(!confirm('ลบรถคันนี้?')) return;
-  await fetch(`/api/cars/${id}`,{method:'DELETE'});
+  await api.admin.deleteCar(id);
   toast('🗑','ลบแล้ว','success'); await loadCars(); await loadStats();
 }
 
@@ -619,6 +619,7 @@ function showTab(name,el){
   document.querySelectorAll('.admin-nav a').forEach(a=>a.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(el) el.classList.add('active');
+  if(name==='analytics') loadAnalytics();
 }
 
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -633,8 +634,10 @@ function toast(icon,msg,type){
 }
 
 async function login(){
-  const d=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:document.getElementById('loginEmail').value,password:document.getElementById('loginPassword').value})}).then(r=>r.json());
+  const d=await api.login(
+    document.getElementById('loginEmail').value,
+    document.getElementById('loginPassword').value
+  );
   if(d.success&&d.role==='admin'){
     closeModal('loginModal');
     document.getElementById('accessDenied').style.display='none';
@@ -655,7 +658,7 @@ init();
 function exportSchedule(){
   const mon = getMonday(new Date());
   const ys  = [mon.getFullYear(), String(mon.getMonth()+1).padStart(2,'0'), String(mon.getDate()).padStart(2,'0')].join('-');
-  const url = `http://localhost:3000/api/admin/export/schedule?weekStart=${ys}`;
+  const url = API + `/api/admin/export/schedule?weekStart=${ys}`;
   window.open(url, '_blank');
 }
 function getMonday(d){ const dt=new Date(d); dt.setDate(dt.getDate()-((dt.getDay()+6)%7)); return dt; }
